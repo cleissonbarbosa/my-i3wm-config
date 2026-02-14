@@ -25,6 +25,29 @@ Minha configuração pessoal do **i3 window manager** com tema **Dracula**, comp
 
 ## Instalação
 
+### Instalador (script)
+
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+Modo nao-interativo com flags (exemplos):
+
+```bash
+# Aplica tudo e instala dependencias (padrao completo)
+./install.sh --all --non-interactive
+
+# Aplica configs sem dependencias
+./install.sh --non-interactive --no-deps
+
+# Personaliza diretorios
+./install.sh --non-interactive --config-dir "$HOME/.config" --wallpaper-dir "$HOME/Pictures/desktop background"
+
+# Instala extras opcionais no modo nao-interativo
+./install.sh --all --non-interactive --with-gnome-settings --with-flameshot
+```
+
 ### Dependências
 
 ```bash
@@ -220,17 +243,17 @@ Coloque seus wallpapers nesse diretório para ativar o slideshow.
 
 As cores são definidas como **variáveis no config do i3**, facilitando a manutenção e consistência:
 
-- `$backgroundColor` =  ![#282a36](https://placehold.co/15x15/282a36/282a36) `#282a36`
-- `$foreground` =       ![#f8f8f2](https://placehold.co/15x15/f8f8f2/f8f8f2) `#f8f8f2`
-- `$selection` =        ![#44475a](https://placehold.co/15x15/44475a/44475a) `#44475a`
-- `$comment` =          ![#6272a4](https://placehold.co/15x15/6272a4/6272a4) `#6272a4`
-- `$red` =              ![#ff5555](https://placehold.co/15x15/ff5555/ff5555) `#ff5555`
-- `$green` =            ![#50fa7b](https://placehold.co/15x15/50fa7b/50fa7b) `#50fa7b`
-- `$yellow` =           ![#f1fa8c](https://placehold.co/15x15/f1fa8c/f1fa8c) `#f1fa8c`
-- `$orange` =           ![#ffb86c](https://placehold.co/15x15/ffb86c/ffb86c) `#ffb86c`
-- `$magenta` =          ![#ff79c6](https://placehold.co/15x15/ff79c6/ff79c6) `#ff79c6`
-- `$cyan` =             ![#8be9fd](https://placehold.co/15x15/8be9fd/8be9fd) `#8be9fd`
-- `$blue` =             ![#6272a4](https://placehold.co/15x15/6272a4/6272a4) `#6272a4`
+- `$backgroundColor` = ![#282a36](https://placehold.co/15x15/282a36/282a36) `#282a36`
+- `$foreground` = ![#f8f8f2](https://placehold.co/15x15/f8f8f2/f8f8f2) `#f8f8f2`
+- `$selection` = ![#44475a](https://placehold.co/15x15/44475a/44475a) `#44475a`
+- `$comment` = ![#6272a4](https://placehold.co/15x15/6272a4/6272a4) `#6272a4`
+- `$red` = ![#ff5555](https://placehold.co/15x15/ff5555/ff5555) `#ff5555`
+- `$green` = ![#50fa7b](https://placehold.co/15x15/50fa7b/50fa7b) `#50fa7b`
+- `$yellow` = ![#f1fa8c](https://placehold.co/15x15/f1fa8c/f1fa8c) `#f1fa8c`
+- `$orange` = ![#ffb86c](https://placehold.co/15x15/ffb86c/ffb86c) `#ffb86c`
+- `$magenta` = ![#ff79c6](https://placehold.co/15x15/ff79c6/ff79c6) `#ff79c6`
+- `$cyan` = ![#8be9fd](https://placehold.co/15x15/8be9fd/8be9fd) `#8be9fd`
+- `$blue` = ![#6272a4](https://placehold.co/15x15/6272a4/6272a4) `#6272a4`
 
 Aplicado de forma consistente em: i3wm (bordas, barra, i3lock), Rofi e i3status-rs.
 
@@ -241,6 +264,7 @@ Aplicado de forma consistente em: i3wm (bordas, barra, i3lock), Rofi e i3status-
 > **Importante:** O lock screen utiliza [i3lock-color](https://github.com/Raymo111/i3lock-color), que é um fork do i3lock com suporte a customização visual. O `i3lock` padrão **não** suporta as opções de cor, blur, relógio e indicador usadas nesta configuração.
 
 Recursos configurados:
+
 - Tema Dracula com cores personalizadas no indicador
 - Blur de fundo (nível 5)
 - Relógio com data e hora
@@ -265,4 +289,5 @@ Recursos configurados:
 ![Work](./assets/img/i3wm-overview.png)
 
 ### Lock Screen
+
 ![Lock Screen](./assets/img/lock-screen.png)
