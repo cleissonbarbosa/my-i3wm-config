@@ -1,8 +1,8 @@
 [theme]
-theme = "dracula" # Tema que combina com as cores que você estava usando
+theme = "dracula"
 
 [icons]
-icons = "material" # Requer font-awesome instalado
+icons = "awesome6" # Requer font-awesome instalado
 
 [[block]]
 block = "disk_space"
