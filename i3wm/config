@@ -10,11 +10,24 @@
 # Please see https://i3wm.org/docs/userguide.html for a complete reference!
 
 set $mod Mod4
+set $alpha 'dd'
+set $backgroundColor #282a36
+set $selection #44475a
+set $comment #6272a4
+set $foreground #f8f8f2
+
+set $yellow #f1fa8c
+set $orange #ffb86c
+set $red #ff5555
+set $magenta #ff79c6
+set $blue #6272a4
+set $cyan #8be9fd
+set $green #50fa7b
 
 
 # Font for window titles. Will also be used by the bar unless a different font
 # is used in the bar {} block below.
-font pango:monospace 8
+font pango:JetBrainsMono Nerd Font 8
 
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
 # text rendering and scalability on retina/hidpi displays (thanks to pango).
@@ -29,7 +42,46 @@ exec --no-startup-id dex --autostart --environment i3
 
 # xss-lock grabs a logind suspend inhibit lock and will use i3lock to lock the
 # screen before suspend. Use loginctl lock-session to lock your screen.
-exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
+exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock \
+  --insidever-color=$selection$alpha \
+  --insidewrong-color=$selection$alpha \
+  --inside-color=$selection$alpha \
+  --ringver-color=$green$alpha \
+  --ringwrong-color=$red$alpha \
+  --ringver-color=$green$alpha \
+  --ringwrong-color=$red$alpha \
+  --ring-color=$blue$alpha \
+  --line-uses-ring \
+  --keyhl-color=$magenta$alpha \
+  --bshl-color=$orange$alpha \
+  --separator-color=$selection$alpha \
+  --verif-color=$green \
+  --wrong-color=$red \
+  --modif-color=$red \
+  --layout-color=$blue \
+  --date-color=$blue \
+  --time-color=$blue \
+  --screen 1 \
+  --blur 5 \
+  --clock \
+  --indicator \
+  --time-str="%H:%M:%S" \
+  --date-str="%A %e %B %Y" \
+  --verif-text="Checking..." \
+  --wrong-text="Wrong pswd" \
+  --noinput="No Input" \
+  --lock-text="Locking..." \
+  --lockfailed="Lock Failed" \
+  --radius=120 \
+  --ring-width=10 \
+  --pass-media-keys \
+  --pass-screen-keys \
+  --pass-volume-keys \
+  --time-font="JetBrainsMono Nerd Font" \
+  --date-font="JetBrainsMono Nerd Font" \
+  --layout-font="JetBrainsMono Nerd Font" \
+  --verif-font="JetBrainsMono Nerd Font" \
+  --wrong-font="JetBrainsMono Nerd Font" --nofork
 
 # NetworkManager is the most popular way to manage wireless networks on Linux,
 # and nm-applet is a desktop environment-independent system tray GUI for it.
@@ -122,6 +174,12 @@ bindsym $mod+a focus parent
 
 # focus the child container
 #bindsym $mod+d focus child
+
+# ignore Libadawaita
+exec --no-startup-id systemctl --user set-environment ADW_DISABLE_PORTAL=1
+
+# Open Gnome Settings
+bindsym $mod+Shift+s exec --no-startup-id XDG_CURRENT_DESKTOP=GNOME gnome-control-center
 
 # Define names for default workspaces for which we configure key bindings later on.
 # We use variables to avoid repeating the names in multiple places.
@@ -221,6 +279,10 @@ bindsym $mod+r mode "resize"
 
 # Desativar barras de título (necessário para o funcionamento correto dos gaps)
 for_window [class=".*"] border pixel 0
+smart_borders on
+default_border none
+default_floating_border none
+
 
 # Espaçamento entre janelas (Inner Gaps)
 gaps inner 10
@@ -237,22 +299,22 @@ bar {
 #        status_command i3status -c ~/.config/i3status/config
         status_command i3status-rs ~/.config/i3status/config.toml
 
-        font pango:DejaVu Sans Mono 10
+        font pango:JetBrainsMono Nerd Font 10
         tray_output DP-0
         tray_padding 4
         height 25
         position top
 
         colors {
-          background #282A36
-          statusline #F8F8F2
-          separator  #44475A
+          background $backgroundColor
+          statusline $foreground
+          separator  $selection
 
-          focused_workspace  #44475A #44475A #F8F8F2
-          active_workspace   #282A36 #44475A #F8F8F2
-          inactive_workspace #282A36 #282A36 #BFBFBF
-          urgent_workspace   #FF5555 #FF5555 #F8F8F2
-          binding_mode       #FF5555 #FF5555 #F8F8F2
+          focused_workspace  $selection $selection $foreground
+          active_workspace   $backgroundColor $selection $foreground
+          inactive_workspace $backgroundColor $backgroundColor #BFBFBF
+          urgent_workspace   $red $red $foreground
+          binding_mode       $red $red $foreground
         }
 }
 
@@ -263,13 +325,13 @@ exec_always --no-startup-id xrandr --output DP-4 --mode 1920x1080 --rate 144.00
 
 
 # class                 border  bground text    indicator child_border
-client.focused          #6272A4 #6272A4 #F8F8F2 #6272A4   #6272A4
-client.focused_inactive #44475A #44475A #F8F8F2 #44475A   #44475A
-client.unfocused        #282A36 #282A36 #BFBFBF #282A36   #282A36
-client.urgent           #44475A #FF5555 #F8F8F2 #FF5555   #FF5555
-client.placeholder      #282A36 #282A36 #F8F8F2 #282A36   #282A36
+client.focused          $comment $comment $foreground $comment   $comment
+client.focused_inactive $selection $selection $foreground $selection   $selection
+client.unfocused        $backgroundColor $backgroundColor #BFBFBF $backgroundColor   $backgroundColor
+client.urgent           $selection $red $foreground $red   $red
+client.placeholder      $backgroundColor $backgroundColor $foreground $backgroundColor   $backgroundColor
 
-client.background       #F8F8F2
+client.background       $foreground
 
 
 # Rofi launcher
@@ -293,3 +355,4 @@ bindsym $mod+b exec --no-startup-id brave-browser
 bindsym $mod+c exec --no-startup-id google-chrome
 
 for_window [class="rustdesk"] floating enable
+

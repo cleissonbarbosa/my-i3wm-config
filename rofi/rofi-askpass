@@ -8,6 +8,7 @@ rofi -dmenu -password -p "Sudo Password: " -theme-str '
   window {
     background-color: #282A36;
     border: 1px;
+    border-radius: 12px;
     border-color: #6272A4;
     width: 20%;
     height: 5%;

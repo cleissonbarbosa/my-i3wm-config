@@ -17,8 +17,9 @@ Minha configuração pessoal do **i3 window manager** com tema **Dracula**, comp
 | Tema                 | [Dracula](https://draculatheme.com/)                      |
 | Wallpaper            | [feh](https://feh.finalrewind.org/) (slideshow aleatório) |
 | Screenshot           | [Flameshot](https://flameshot.org/) (Flatpak)             |
-| Lock Screen          | [i3lock](https://i3wm.org/i3lock/)                        |
+| Lock Screen          | [i3lock-color](https://github.com/Raymo111/i3lock-color)  |
 | Notificações de Rede | nm-applet                                                 |
+| Fonte                | [JetBrainsMono Nerd Font](https://www.nerdfonts.com/)     |
 
 ---
 
@@ -28,7 +29,11 @@ Minha configuração pessoal do **i3 window manager** com tema **Dracula**, comp
 
 ```bash
 # i3 e utilitários
-sudo apt install i3 i3lock xss-lock dex numlockx feh
+sudo apt install i3 xss-lock dex numlockx feh
+
+# i3lock-color (necessário para lock screen com tema Dracula)
+# O i3lock padrão NÃO suporta as opções de personalização usadas nesta config.
+# Instale o i3lock-color: https://github.com/Raymo111/i3lock-color#installation
 
 # Compositor
 sudo apt install picom
@@ -48,14 +53,18 @@ sudo apt install light
 # Rede
 sudo apt install network-manager-gnome
 
+# GNOME Settings (opcional, para $mod+Shift+s)
+sudo apt install gnome-control-center
+
 # Screenshot (Flatpak)
 flatpak install flathub org.flameshot.Flameshot
 
 # Navegadores
 # Instale Brave e/ou Google Chrome manualmente
 
-# Fontes (necessário para ícones na barra)
-sudo apt install fonts-material-design-icons-iconfont fonts-dejavu
+# Fontes (necessário para ícones e texto na barra)
+# JetBrainsMono Nerd Font: https://www.nerdfonts.com/font-downloads
+sudo apt install fonts-material-design-icons-iconfont
 ```
 
 ### Aplicando as configurações
@@ -95,6 +104,7 @@ chmod +x ~/rofi_launcher.sh ~/rofi_sudo_launcher.sh ~/.local/bin/rofi-askpass
 | `$mod + Shift+q` | Fechar janela focada           |
 | `$mod + d`       | Abrir Rofi (launcher)          |
 | `$mod + Shift+d` | Abrir Rofi com sudo            |
+| `$mod + Shift+s` | Abrir GNOME Settings           |
 | `$mod + Shift+c` | Recarregar configuração do i3  |
 | `$mod + Shift+r` | Reiniciar i3 (preserva sessão) |
 | `$mod + Shift+e` | Sair do i3                     |
@@ -182,17 +192,19 @@ Posição: **topo** | Tema: **Dracula** | Ícones: **Material**
 
 ## Picom (Compositor)
 
-| Efeito              | Configuração          |
-| ------------------- | --------------------- |
-| Sombras             | Ativadas (raio: 12px) |
-| Fading              | Ativado (delta: 4ms)  |
-| Opacidade inativa   | 97%                   |
-| Opacidade do frame  | 70%                   |
-| Cantos arredondados | 12px                  |
-| Blur de fundo       | Ativado               |
-| Opacidade URxvt     | 80%                   |
+| Efeito              | Configuração                           |
+| ------------------- | -------------------------------------- |
+| Backend             | xrender                                |
+| Sombras             | Ativadas (raio: 12px, opacidade: 0.45) |
+| Fading              | Ativado (delta: 4ms)                   |
+| Opacidade inativa   | 99%                                    |
+| Opacidade do frame  | 98%                                    |
+| Cantos arredondados | 12px                                   |
+| Blur de fundo       | Desativado                             |
+| VSync               | Ativado                                |
+| Opacidade URxvt     | 80%                                    |
 
-> Exclusões de sombra/cantos: Conky, dock, desktop, Remmina, xfreerdp.
+> Exclusões de sombra/cantos: Conky, dock, desktop, i3-frame.
 
 ---
 
@@ -206,13 +218,35 @@ Coloque seus wallpapers nesse diretório para ativar o slideshow.
 
 ## Tema de Cores (Dracula)
 
-```
-Background  #282A36
-Foreground  #F8F8F2
-Selection   #44475A
-Comment     #6272A4
-Red         #FF5555
-```
+As cores são definidas como **variáveis no config do i3**, facilitando a manutenção e consistência:
+
+- `$backgroundColor` =  ![#282a36](https://placehold.co/15x15/282a36/282a36) `#282a36`
+- `$foreground` =       ![#f8f8f2](https://placehold.co/15x15/f8f8f2/f8f8f2) `#f8f8f2`
+- `$selection` =        ![#44475a](https://placehold.co/15x15/44475a/44475a) `#44475a`
+- `$comment` =          ![#6272a4](https://placehold.co/15x15/6272a4/6272a4) `#6272a4`
+- `$red` =              ![#ff5555](https://placehold.co/15x15/ff5555/ff5555) `#ff5555`
+- `$green` =            ![#50fa7b](https://placehold.co/15x15/50fa7b/50fa7b) `#50fa7b`
+- `$yellow` =           ![#f1fa8c](https://placehold.co/15x15/f1fa8c/f1fa8c) `#f1fa8c`
+- `$orange` =           ![#ffb86c](https://placehold.co/15x15/ffb86c/ffb86c) `#ffb86c`
+- `$magenta` =          ![#ff79c6](https://placehold.co/15x15/ff79c6/ff79c6) `#ff79c6`
+- `$cyan` =             ![#8be9fd](https://placehold.co/15x15/8be9fd/8be9fd) `#8be9fd`
+- `$blue` =             ![#6272a4](https://placehold.co/15x15/6272a4/6272a4) `#6272a4`
+
+Aplicado de forma consistente em: i3wm (bordas, barra, i3lock), Rofi e i3status-rs.
+
+---
+
+## Lock Screen (i3lock-color)
+
+> **Importante:** O lock screen utiliza [i3lock-color](https://github.com/Raymo111/i3lock-color), que é um fork do i3lock com suporte a customização visual. O `i3lock` padrão **não** suporta as opções de cor, blur, relógio e indicador usadas nesta configuração.
+
+Recursos configurados:
+- Tema Dracula com cores personalizadas no indicador
+- Blur de fundo (nível 5)
+- Relógio com data e hora
+- Indicador circular (raio: 120px)
+- Fonte JetBrainsMono Nerd Font
+- Passthrough de teclas de mídia e volume
 
 ---
 
@@ -229,3 +263,6 @@ Red         #FF5555
 ### Workflow
 
 ![Work](./assets/img/i3wm-overview.png)
+
+### Lock Screen
+![Lock Screen](./assets/img/lock-screen.png)

@@ -9,6 +9,7 @@ rofi -show drun -run-command "sudo -A {cmd}" -theme-str '
   window {
     background-color: #282A36;
     border: 1px;
+    border-radius: 12px;
     border-color: #6272A4;
     width: 30%;
     padding: 10px;
