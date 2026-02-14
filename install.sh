@@ -14,6 +14,7 @@ INSTALL_DEPS=false
 APPLY_I3=true
 APPLY_I3STATUS=true
 APPLY_PICOM=true
+APPLY_DUNST=true
 INSTALL_ROFI=true
 COPY_WALLPAPERS=true
 WITH_GNOME_SETTINGS=false
@@ -34,6 +35,7 @@ Opcoes:
   --no-i3                   Nao aplica config do i3
   --no-i3status             Nao aplica config do i3status-rs
   --no-picom                Nao aplica config do picom
+  --no-dunst                Nao aplica config do dunst
   --no-rofi                 Nao instala scripts do rofi
   --no-wallpapers           Nao copia wallpapers do repo
   --with-gnome-settings     Instala gnome-control-center
@@ -150,6 +152,10 @@ while [[ $# -gt 0 ]]; do
       APPLY_PICOM=false
       shift
       ;;
+    --no-dunst)
+      APPLY_DUNST=false
+      shift
+      ;;
     --no-rofi)
       INSTALL_ROFI=false
       shift
@@ -210,6 +216,10 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
       install_apt_packages picom
     fi
 
+    if prompt_yes_no "Instalar dunst" "y"; then
+      install_apt_packages dunst
+    fi
+
     if prompt_yes_no "Instalar rofi" "y"; then
       install_apt_packages rofi
     fi
@@ -245,6 +255,7 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
     install_apt_packages \
       i3 xss-lock dex numlockx feh \
       picom \
+      dunst \
       rofi \
       pulseaudio-utils playerctl \
       light \
@@ -304,6 +315,18 @@ fi
 
 if [[ "$APPLY_PICOM" == "true" ]]; then
   copy_file "$SCRIPT_DIR/picom/picom.conf" "$CONFIG_DIR/picom/picom.conf"
+fi
+
+if [[ "$INTERACTIVE" == "true" ]]; then
+  if prompt_yes_no "Aplicar config do dunst" "y"; then
+    APPLY_DUNST=true
+  else
+    APPLY_DUNST=false
+  fi
+fi
+
+if [[ "$APPLY_DUNST" == "true" ]]; then
+  copy_file "$SCRIPT_DIR/dunst/dunstrc" "$CONFIG_DIR/dunst/dunstrc"
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
