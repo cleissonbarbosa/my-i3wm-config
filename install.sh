@@ -19,6 +19,32 @@ INSTALL_ROFI=true
 COPY_WALLPAPERS=true
 WITH_GNOME_SETTINGS=false
 WITH_FLAMESHOT=false
+BUILD_PICOM=false
+PICOM_SRC_DIR="$HOME/.local/src/picom"
+
+# Dependencias de desenvolvimento necessárias para compilar o Picom v13
+PICOM_DEV_PACKAGES=(
+  meson
+  ninja-build
+  pkg-config
+  git
+  libxcb1-dev
+  libxcb-util0-dev
+  libxcb-ewmh-dev
+  libxcb-randr0-dev
+  libxcb-composite0-dev
+  libxcb-xfixes0-dev
+  libxcb-render-util0-dev
+  libxcb-shape0-dev
+  libx11-dev
+  libxrandr-dev
+  libxrender-dev
+  libxdamage-dev
+  libpango1.0-dev
+  libglib2.0-dev
+  libxkbcommon-dev
+  build-essential
+)
 
 log() {
   printf '%s\n' "$*"
@@ -118,6 +144,34 @@ install_apt_packages() {
   sudo apt install -y "${packages[@]}"
 }
 
+build_picom_from_source() {
+  log "Compilando Picom v13 a partir do fonte em: $PICOM_SRC_DIR"
+  ensure_dir "$(dirname "$PICOM_SRC_DIR")"
+
+  if [[ -d "$PICOM_SRC_DIR/.git" ]]; then
+    log "Repositorio existente encontrado, atualizando..."
+    git -C "$PICOM_SRC_DIR" fetch --tags --all || true
+    git -C "$PICOM_SRC_DIR" checkout v13 2>/dev/null || true
+    git -C "$PICOM_SRC_DIR" pull --ff-only || true
+  else
+    log "Clonando picom..."
+    if ! git clone git@github.com:yshui/picom.git "$PICOM_SRC_DIR" >/dev/null 2>&1; then
+      log "Clone via SSH falhou, tentando HTTPS..."
+      git clone https://github.com/yshui/picom.git "$PICOM_SRC_DIR"
+    fi
+    git -C "$PICOM_SRC_DIR" fetch --tags --all || true
+    git -C "$PICOM_SRC_DIR" checkout v13 2>/dev/null || true
+  fi
+
+  log "Configurando meson..."
+  (cd "$PICOM_SRC_DIR" && meson setup --buildtype=release build) || (cd "$PICOM_SRC_DIR" && meson setup build --buildtype=release)
+  log "Compilando com ninja..."
+  ninja -C "$PICOM_SRC_DIR/build"
+  log "Instalando (requer sudo)..."
+  sudo ninja -C "$PICOM_SRC_DIR/build" install
+  log "Picom compilado e instalado com sucesso."
+}
+
 log "==== Instalador i3wm config ===="
 log "Diretorio do repo: $SCRIPT_DIR"
 
@@ -172,6 +226,10 @@ while [[ $# -gt 0 ]]; do
       WITH_FLAMESHOT=true
       shift
       ;;
+    --picom-src)
+      BUILD_PICOM=true
+      shift
+      ;;
     --config-dir)
       CONFIG_DIR_DEFAULT="$2"
       shift 2
@@ -214,6 +272,10 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
 
     if prompt_yes_no "Instalar picom" "y"; then
       install_apt_packages picom
+    fi
+
+    if prompt_yes_no "Compilar Picom v13 a partir do fonte (requer dependencias de desenvolvimento)" "n"; then
+      BUILD_PICOM=true
     fi
 
     if prompt_yes_no "Instalar dunst" "y"; then
@@ -273,6 +335,10 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
         log "flatpak nao encontrado. Pulei Flameshot."
       fi
     fi
+
+    if [[ "$BUILD_PICOM" == "true" ]]; then
+      install_apt_packages "${PICOM_DEV_PACKAGES[@]}"
+    fi
   fi
 
   log "Notas:"
@@ -315,6 +381,13 @@ fi
 
 if [[ "$APPLY_PICOM" == "true" ]]; then
   copy_file "$SCRIPT_DIR/picom/picom.conf" "$CONFIG_DIR/picom/picom.conf"
+fi
+
+if [[ "$BUILD_PICOM" == "true" ]]; then
+  if [[ "$INSTALL_DEPS" == "true" ]]; then
+    install_apt_packages "${PICOM_DEV_PACKAGES[@]}"
+  fi
+  build_picom_from_source
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then

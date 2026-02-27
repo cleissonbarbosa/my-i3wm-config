@@ -1,62 +1,62 @@
-# My i3wm Config
+# My i3wm setup for Zorin OS
 
 ![i3wm Overview](./assets/img/i3wm-overview.png)
 
-Minha configuração pessoal do **i3 window manager** com tema **Dracula**, compositor **Picom**, barra de status **i3status-rs** e launcher **Rofi**.
+My personal configuration for i3 (i3-gaps). I use the Dracula theme, Picom as a compositor, i3status-rs for the status bar, and Rofi as a launcher. This repository provides ready-to-copy scripts and configuration files for `~/.config` and `~/.local/bin`.
 
 ---
 
-## Componentes
+## Components
 
-| Componente           | Ferramenta                                                |
-| -------------------- | --------------------------------------------------------- |
-| Window Manager       | [i3wm](https://i3wm.org/) (i3-gaps)                       |
-| Barra de Status      | [i3status-rs](https://github.com/greshake/i3status-rust)  |
-| Compositor           | [Picom](https://github.com/yshui/picom)                   |
-| Launcher             | [Rofi](https://github.com/davatorium/rofi)                |
-| Tema                 | [Dracula](https://draculatheme.com/)                      |
-| Wallpaper            | [feh](https://feh.finalrewind.org/) (slideshow aleatório) |
-| Screenshot           | [Flameshot](https://flameshot.org/) (Flatpak)             |
-| Lock Screen          | [i3lock-color](https://github.com/Raymo111/i3lock-color)  |
-| Notificações de Rede | nm-applet                                                 |
-| Fonte                | [JetBrainsMono Nerd Font](https://www.nerdfonts.com/)     |
+| Component            | Tool                                                    |
+| -------------------- | --------------------------------------------------------|
+| Window Manager       | [i3wm](https://i3wm.org/) (i3-gaps)                     |
+| Status Bar           | [i3status-rs](https://github.com/greshake/i3status-rust)|
+| Compositor           | [Picom](https://github.com/yshui/picom)                 |
+| Launcher             | [Rofi](https://github.com/davatorium/rofi)              |
+| Theme                | [Dracula](https://draculatheme.com/)                    |
+| Wallpaper            | [feh](https://feh.finalrewind.org/) (random slideshow)  |
+| Screenshot           | [Flameshot](https://flameshot.org/) (Flatpak)           |
+| Lock Screen          | [i3lock-color](https://github.com/Raymo111/i3lock-color)|
+| Network Notifications| nm-applet                                               |
+| Font                 | [JetBrainsMono Nerd Font](https://www.nerdfonts.com/)   |
 
 ---
 
-## Instalação
+## Quick Installation
 
-### Instalador (script)
+Make the installer executable and run:
 
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
 
-Modo nao-interativo com flags (exemplos):
+Non-interactive mode with flags (examples):
 
 ```bash
-# Aplica tudo e instala dependencias (padrao completo)
+# Apply everything and install dependencies (full default)
 ./install.sh --all --non-interactive
 
-# Aplica configs sem dependencias
+# Apply configs without dependencies
 ./install.sh --non-interactive --no-deps
 
-# Personaliza diretorios
+# Customize directories
 ./install.sh --non-interactive --config-dir "$HOME/.config" --wallpaper-dir "$HOME/Pictures/desktop background"
 
-# Instala extras opcionais no modo nao-interativo
+# Install optional extras in non-interactive mode
 ./install.sh --all --non-interactive --with-gnome-settings --with-flameshot
 ```
 
-### Dependências
+### Dependencies
 
 ```bash
-# i3 e utilitários
+# i3 and utilities
 sudo apt install i3 xss-lock dex numlockx feh
 
-# i3lock-color (necessário para lock screen com tema Dracula)
-# O i3lock padrão NÃO suporta as opções de personalização usadas nesta config.
-# Instale o i3lock-color: https://github.com/Raymo111/i3lock-color#installation
+# i3lock-color (required for Dracula-themed lock screen)
+# The default i3lock does NOT support the customization options used in this config.
+# Install i3lock-color: https://github.com/Raymo111/i3lock-color#installation
 
 # Compositor
 sudo apt install picom
@@ -64,184 +64,191 @@ sudo apt install picom
 # Launcher
 sudo apt install rofi
 
-# Barra de status (i3status-rs)
-# Veja: https://github.com/greshake/i3status-rust#installation
+# Status bar (i3status-rs)
+# See: https://github.com/greshake/i3status-rust#installation
 
-# Controle de volume e mídia
+# Volume and media control
 sudo apt install pulseaudio-utils playerctl
 
-# Controle de brilho
+# Brightness control
 sudo apt install light
 
-# Rede
+# Network
 sudo apt install network-manager-gnome
 
-# GNOME Settings (opcional, para $mod+Shift+s)
+# GNOME Settings (optional, for $mod+Shift+s)
 sudo apt install gnome-control-center
 
 # Screenshot (Flatpak)
 flatpak install flathub org.flameshot.Flameshot
 
-# Navegadores
-# Instale Brave e/ou Google Chrome manualmente
+# Browsers
+# Install Brave and/or Google Chrome manually
 
-# Fontes (necessário para ícones e texto na barra)
+# Fonts (required for icons and text in the bar)
 # JetBrainsMono Nerd Font: https://www.nerdfonts.com/font-downloads
 sudo apt install fonts-material-design-icons-iconfont
 ```
 
-### Aplicando as configurações
+### Applying the Configurations
+
+Clone the repository and copy the files:
 
 ```bash
-# Clonar o repositório
+# Clone the repository
 git clone https://github.com/cleissonbarbosa/my-i3wm-config.git
 
-# Copiar arquivos de configuração
+# Copy configuration files
 cp my-i3wm-config/i3wm/config ~/.config/i3/config
 cp my-i3wm-config/i3wm/i3status/config.toml ~/.config/i3status/config.toml
 cp my-i3wm-config/picom/picom.conf ~/.config/picom/picom.conf
 
-# Scripts do Rofi
+# Rofi scripts
 cp my-i3wm-config/rofi/rofi_launcher.sh ~/rofi_launcher.sh
 cp my-i3wm-config/rofi/rofi_sudo_launcher.sh ~/rofi_sudo_launcher.sh
 cp my-i3wm-config/rofi/rofi-askpass ~/.local/bin/rofi-askpass
 
-# Dar permissão de execução aos scripts
+# Make scripts executable
 chmod +x ~/rofi_launcher.sh ~/rofi_sudo_launcher.sh ~/.local/bin/rofi-askpass
 
-# Recarregar o i3
+# Reload i3
 # $mod+Shift+r
 ```
 
+Reload i3 with `$mod+Shift+r`.
+
 ---
 
-## Atalhos de Teclado
+## Keyboard Shortcuts
 
-> **Mod key** = `Super` (tecla Windows)
+> **Mod key** = `Super` (Windows key)
 
-### Geral
+### General
 
-| Atalho           | Ação                           |
-| ---------------- | ------------------------------ |
-| `$mod + Return`  | Abrir terminal                 |
-| `$mod + Shift+q` | Fechar janela focada           |
-| `$mod + d`       | Abrir Rofi (launcher)          |
-| `$mod + Shift+d` | Abrir Rofi com sudo            |
-| `$mod + Shift+s` | Abrir GNOME Settings           |
-| `$mod + Shift+c` | Recarregar configuração do i3  |
-| `$mod + Shift+r` | Reiniciar i3 (preserva sessão) |
-| `$mod + Shift+e` | Sair do i3                     |
+| Shortcut           | Action                         |
+| ------------------ | -------------------------------|
+| `$mod + Return`    | Open terminal                  |
+| `$mod + Shift+q`   | Close focused window           |
+| `$mod + d`         | Open Rofi (launcher)           |
+| `$mod + Shift+d`   | Open Rofi with sudo            |
+| `$mod + Shift+s`   | Open GNOME Settings            |
+| `$mod + Shift+c`   | Reload i3 configuration        |
+| `$mod + Shift+r`   | Restart i3 (preserve session)  |
+| `$mod + Shift+e`   | Exit i3                        |
 
-### Navegação
+### Navigation
 
-| Atalho                   | Ação                                     |
-| ------------------------ | ---------------------------------------- |
-| `$mod + j/k/l/ç`         | Focar esquerda/baixo/cima/direita        |
-| `$mod + Setas`           | Focar esquerda/baixo/cima/direita        |
-| `$mod + Shift + j/k/l/ç` | Mover janela esquerda/baixo/cima/direita |
-| `$mod + Shift + Setas`   | Mover janela esquerda/baixo/cima/direita |
-| `$mod + 1-9,0`           | Trocar para workspace 1-10               |
-| `$mod + Shift + 1-9,0`   | Mover janela para workspace 1-10         |
+| Shortcut                  | Action                                 |
+| ------------------------- | -------------------------------------- |
+| `$mod + j/k/l/ç`          | Focus left/down/up/right               |
+| `$mod + Arrows`           | Focus left/down/up/right               |
+| `$mod + Shift + j/k/l/ç`  | Move window left/down/up/right         |
+| `$mod + Shift + Arrows`   | Move window left/down/up/right         |
+| `$mod + 1-9,0`            | Switch to workspace 1-10               |
+| `$mod + Shift + 1-9,0`    | Move window to workspace 1-10          |
 
 ### Layout
 
-| Atalho               | Ação                          |
-| -------------------- | ----------------------------- |
-| `$mod + h`           | Split horizontal              |
-| `$mod + v`           | Split vertical                |
-| `$mod + f`           | Fullscreen                    |
-| `$mod + s`           | Layout stacking               |
-| `$mod + w`           | Layout tabbed                 |
-| `$mod + e`           | Layout toggle split           |
-| `$mod + Shift+Space` | Alternar tiling/floating      |
-| `$mod + Space`       | Alternar foco tiling/floating |
-| `$mod + r`           | Modo resize                   |
+| Shortcut              | Action                         |
+| --------------------- | ------------------------------ |
+| `$mod + h`            | Split horizontal               |
+| `$mod + v`            | Split vertical                 |
+| `$mod + f`            | Fullscreen                     |
+| `$mod + s`            | Layout stacking                |
+| `$mod + w`            | Layout tabbed                  |
+| `$mod + e`            | Layout toggle split            |
+| `$mod + Shift+Space`  | Toggle tiling/floating         |
+| `$mod + Space`        | Toggle focus tiling/floating   |
+| `$mod + r`            | Resize mode                    |
 
-### Aplicativos
+### Applications
 
-| Atalho     | Ação                   |
-| ---------- | ---------------------- |
-| `$mod + b` | Abrir Brave Browser    |
-| `$mod + c` | Abrir Google Chrome    |
-| `Print`    | Screenshot (Flameshot) |
+| Shortcut     | Action                |
+| ------------ | --------------------- |
+| `$mod + b`   | Open Brave Browser    |
+| `$mod + c`   | Open Google Chrome    |
+| `Print`      | Screenshot (Flameshot)|
 
-### Mídia e Hardware
+### Media and Hardware
 
-| Atalho                  | Ação                     |
-| ----------------------- | ------------------------ |
-| `XF86AudioRaiseVolume`  | Aumentar volume (+10%)   |
-| `XF86AudioLowerVolume`  | Diminuir volume (-10%)   |
-| `XF86AudioMute`         | Mutar/desmutar           |
-| `XF86AudioMicMute`      | Mutar/desmutar microfone |
-| `XF86AudioPlay`         | Play/Pause               |
-| `XF86AudioNext`         | Próxima faixa            |
-| `XF86AudioPrev`         | Faixa anterior           |
-| `XF86AudioStop`         | Parar reprodução         |
-| `XF86MonBrightnessUp`   | Aumentar brilho (+5)     |
-| `XF86MonBrightnessDown` | Diminuir brilho (-5)     |
-
----
-
-## Configuração de Monitores
-
-Setup dual-monitor com ambos em **1920x1080 @ 144Hz**:
-
-- **DP-0** — Monitor esquerdo (principal, com tray)
-- **DP-4** — Monitor direito
-
-> Ajuste os nomes das saídas (`DP-0`, `DP-4`) conforme seu hardware usando `xrandr --query`.
+| Shortcut                 | Action                    |
+| ------------------------ | ------------------------- |
+| `XF86AudioRaiseVolume`   | Increase volume (+10%)    |
+| `XF86AudioLowerVolume`   | Decrease volume (-10%)    |
+| `XF86AudioMute`          | Mute/unmute               |
+| `XF86AudioMicMute`       | Mute/unmute microphone    |
+| `XF86AudioPlay`          | Play/Pause                |
+| `XF86AudioNext`          | Next track                |
+| `XF86AudioPrev`          | Previous track            |
+| `XF86AudioStop`          | Stop playback             |
+| `XF86MonBrightnessUp`    | Increase brightness (+5)  |
+| `XF86MonBrightnessDown`  | Decrease brightness (-5)  |
 
 ---
 
-## Barra de Status (i3status-rs)
+## Monitor Setup
 
-Posição: **topo** | Tema: **Dracula** | Ícones: **Material**
+Dual-monitor setup with both at **1920x1080 @ 144Hz**:
 
-### Blocos configurados
+- **DP-0** — Left monitor (primary, with tray)
+- **DP-4** — Right monitor
 
-| Bloco        | Informação                                         |
-| ------------ | -------------------------------------------------- |
-| `disk_space` | Espaço disponível em `/`                           |
-| `memory`     | Uso de RAM (alerta em 70%, crítico em 90%)         |
-| `cpu`        | Utilização da CPU                                  |
-| `nvidia_gpu` | Utilização e temperatura da GPU NVIDIA             |
-| `net`        | Velocidade de rede (interface `enp7s0`)            |
-| `time`       | Data e hora (formato `Seg 01-01-2026 14:30:00`)    |
-| `sound`      | Volume do áudio                                    |
-| `weather`    | Clima atual (via Met.no, auto-localização)         |
-| `menu`       | Menu de energia (Suspender / Desligar / Reiniciar) |
+> Adjust the output names (`DP-0`, `DP-4`) according to your hardware using `xrandr --query`.
+
+---
+
+## Status Bar (i3status-rs)
+
+Position: **top** | Theme: **Dracula** | Icons: **Material**
+
+### Configured Blocks
+
+| Block         | Information                                      |
+| ------------- | ------------------------------------------------ |
+| `disk_space`  | Available space on `/`                           |
+| `memory`      | RAM usage (alert at 70%, critical at 90%)        |
+| `cpu`         | CPU utilization                                  |
+| `nvidia_gpu`  | NVIDIA GPU usage and temperature                 |
+| `net`         | Network speed (interface `enp7s0`)               |
+| `time`        | Date and time (format `Mon 01-01-2026 14:30:00`) |
+| `sound`       | Audio volume                                     |
+| `weather`     | Current weather (via Met.no, auto-location)      |
+| `menu`        | Power menu (Suspend / Shutdown / Restart)        |
 
 ---
 
 ## Picom (Compositor)
 
-| Efeito              | Configuração                           |
-| ------------------- | -------------------------------------- |
-| Backend             | xrender                                |
-| Sombras             | Ativadas (raio: 12px, opacidade: 0.45) |
-| Fading              | Ativado (delta: 4ms)                   |
-| Opacidade inativa   | 99%                                    |
-| Opacidade do frame  | 98%                                    |
-| Cantos arredondados | 12px                                   |
-| Blur de fundo       | Desativado                             |
-| VSync               | Ativado                                |
-| Opacidade URxvt     | 80%                                    |
+Note: I am using Picom v13 compiled locally — this version includes animation support that improves transitions and visual effects.
 
-> Exclusões de sombra/cantos: Conky, dock, desktop, i3-frame.
+| Effect              | Configuration                        |
+| ------------------- | ------------------------------------ |
+| Animations          | Enabled                              |
+| Backend             | xrender                              |
+| Shadows             | Enabled (radius: 12px, opacity: 0.45)|
+| Fading              | Enabled (delta: 4ms)                 |
+| Inactive Opacity    | 99%                                  |
+| Frame Opacity       | 98%                                  |
+| Rounded Corners     | 12px                                 |
+| Background Blur     | Disabled                             |
+| VSync               | Enabled                              |
+| URxvt Opacity       | 80%                                  |
+
+> Shadow/corner exclusions: Conky, dock, desktop, i3-frame.
 
 ---
 
 ## Wallpaper
 
-O feh troca automaticamente o wallpaper a cada **30 segundos**, selecionando aleatoriamente da pasta `~/Pictures/desktop background/`.
+feh automatically changes the wallpaper every **30 seconds**, randomly selecting from the `~/Pictures/desktop background/` folder.
 
-Coloque seus wallpapers nesse diretório para ativar o slideshow.
+Place your wallpapers in this directory to activate the slideshow.
 
 ---
 
-## Tema de Cores (Dracula)
+## Color Theme (Dracula)
 
-As cores são definidas como **variáveis no config do i3**, facilitando a manutenção e consistência:
+Colors are defined as **variables in the i3 config**, making maintenance and consistency easier:
 
 - `$backgroundColor` = ![#282a36](https://placehold.co/15x15/282a36/282a36) `#282a36`
 - `$foreground` = ![#f8f8f2](https://placehold.co/15x15/f8f8f2/f8f8f2) `#f8f8f2`
@@ -255,26 +262,26 @@ As cores são definidas como **variáveis no config do i3**, facilitando a manut
 - `$cyan` = ![#8be9fd](https://placehold.co/15x15/8be9fd/8be9fd) `#8be9fd`
 - `$blue` = ![#6272a4](https://placehold.co/15x15/6272a4/6272a4) `#6272a4`
 
-Aplicado de forma consistente em: i3wm (bordas, barra, i3lock), Rofi e i3status-rs.
+Applied consistently in: i3wm (borders, bar, i3lock), Rofi, and i3status-rs.
 
 ---
 
 ## Lock Screen (i3lock-color)
 
-> **Importante:** O lock screen utiliza [i3lock-color](https://github.com/Raymo111/i3lock-color), que é um fork do i3lock com suporte a customização visual. O `i3lock` padrão **não** suporta as opções de cor, blur, relógio e indicador usadas nesta configuração.
+> **Important:** The lock screen uses [i3lock-color](https://github.com/Raymo111/i3lock-color), which is a fork of i3lock with support for visual customization. The default `i3lock` **does not** support the color, blur, clock, and indicator options used in this configuration.
 
-Recursos configurados:
+Configured features:
 
-- Tema Dracula com cores personalizadas no indicador
-- Blur de fundo (nível 5)
-- Relógio com data e hora
-- Indicador circular (raio: 120px)
-- Fonte JetBrainsMono Nerd Font
-- Passthrough de teclas de mídia e volume
+- Dracula theme with customized indicator colors
+- Background blur (level 5)
+- Clock with date and time
+- Circular indicator (radius: 120px)
+- JetBrainsMono Nerd Font
+- Media and volume key passthrough
 
 ---
 
-## Galeria
+## Gallery
 
 ### Rofi Launcher
 
