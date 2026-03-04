@@ -62,7 +62,7 @@ exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock \
   --date-color=$blue \
   --time-color=$blue \
   --screen 1 \
-  --blur 5 \
+  --blur 25 \
   --clock \
   --indicator \
   --time-str="%H:%M:%S" \
@@ -355,4 +355,7 @@ bindsym $mod+b exec --no-startup-id brave-browser
 bindsym $mod+c exec --no-startup-id google-chrome
 
 for_window [class="rustdesk"] floating enable
+for_window [class="Slack"] focus
 
+bindsym $mod+Shift+n exec dunstctl history-pop
+bindsym $mod+Shift+h exec ~/.local/bin/dunst-history.sh
