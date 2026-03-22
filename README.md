@@ -4,6 +4,8 @@
 
 My personal configuration for i3 (i3-gaps). I use the Dracula theme, Picom as a compositor, i3status-rs for the status bar, and Rofi as a launcher. This repository provides ready-to-copy scripts and configuration files for `~/.config` and `~/.local/bin`.
 
+The alternating split behavior is provided by the upstream project [olemartinorg/i3-alternating-layout](https://github.com/olemartinorg/i3-alternating-layout), which is now included here as a Git submodule in `i3wm/scripts/i3-alternating-layout`.
+
 ---
 
 ## Components
@@ -11,6 +13,7 @@ My personal configuration for i3 (i3-gaps). I use the Dracula theme, Picom as a 
 | Component            | Tool                                                    |
 | -------------------- | --------------------------------------------------------|
 | Window Manager       | [i3wm](https://i3wm.org/) (i3-gaps)                     |
+| Terminal             | [WezTerm](https://wezterm.org/)                         |
 | Status Bar           | [i3status-rs](https://github.com/greshake/i3status-rust)|
 | Compositor           | [Picom](https://github.com/yshui/picom)                 |
 | Launcher             | [Rofi](https://github.com/davatorium/rofi)              |
@@ -25,11 +28,19 @@ My personal configuration for i3 (i3-gaps). I use the Dracula theme, Picom as a 
 
 ## Quick Installation
 
-Make the installer executable and run:
+Clone the repository with submodules, then run the installer:
 
 ```bash
+git clone --recursive https://github.com/cleissonbarbosa/my-i3wm-config.git
+cd my-i3wm-config
 chmod +x install.sh
 ./install.sh
+```
+
+If you already cloned the repository without submodules, run:
+
+```bash
+git submodule update --init --recursive
 ```
 
 Non-interactive mode with flags (examples):
@@ -52,7 +63,7 @@ Non-interactive mode with flags (examples):
 
 ```bash
 # i3 and utilities
-sudo apt install i3 xss-lock dex numlockx feh
+sudo apt install git python3-i3ipc i3 xss-lock dex numlockx feh
 
 # i3lock-color (required for Dracula-themed lock screen)
 # The default i3lock does NOT support the customization options used in this config.
@@ -60,6 +71,10 @@ sudo apt install i3 xss-lock dex numlockx feh
 
 # Compositor
 sudo apt install picom
+
+# Terminal emulator
+# Install WezTerm from the official instructions for your distro:
+# https://wezterm.org/install/linux.html
 
 # Launcher
 sudo apt install rofi
@@ -95,13 +110,22 @@ sudo apt install fonts-material-design-icons-iconfont
 Clone the repository and copy the files:
 
 ```bash
-# Clone the repository
-git clone https://github.com/cleissonbarbosa/my-i3wm-config.git
+# Clone the repository with submodules
+git clone --recursive https://github.com/cleissonbarbosa/my-i3wm-config.git
+
+# If needed later
+git -C my-i3wm-config submodule update --init --recursive
 
 # Copy configuration files
 cp my-i3wm-config/i3wm/config ~/.config/i3/config
 cp my-i3wm-config/i3wm/i3status/config.toml ~/.config/i3status/config.toml
 cp my-i3wm-config/picom/picom.conf ~/.config/picom/picom.conf
+cp my-i3wm-config/wezterm/.wezterm.lua ~/.wezterm.lua
+
+# Copy i3 helper scripts, including the upstream alternating layout submodule
+mkdir -p ~/.config/i3/scripts
+cp -r my-i3wm-config/i3wm/scripts/. ~/.config/i3/scripts/
+chmod +x ~/.config/i3/scripts/i3-alternating-layout/alternating_layouts.py
 
 # Rofi scripts
 cp my-i3wm-config/rofi/rofi_launcher.sh ~/rofi_launcher.sh
@@ -116,6 +140,23 @@ chmod +x ~/rofi_launcher.sh ~/rofi_sudo_launcher.sh ~/.local/bin/rofi-askpass
 ```
 
 Reload i3 with `$mod+Shift+r`.
+
+---
+
+## WezTerm
+
+The repository now includes my WezTerm config in `wezterm/.wezterm.lua`.
+
+Highlights:
+
+- no title bar or tab bar
+- thin split line and zero padding
+- Gruvbox-based palette adapted to match the desktop colors
+- pane navigation with `Alt + Arrow keys`
+- pane splitting with `Alt+e` and `Alt+o`
+- pane close with `Alt+w`
+
+The installer copies this file to `~/.wezterm.lua`.
 
 ---
 

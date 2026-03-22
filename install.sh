@@ -8,6 +8,8 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 CONFIG_DIR_DEFAULT="$HOME/.config"
 ROFI_ASKPASS_DEFAULT="$HOME/.local/bin/rofi-askpass"
 WALLPAPER_DEFAULT_DIR="$HOME/Pictures/desktop background"
+I3_ALTERNATING_LAYOUT_SUBMODULE_PATH="$SCRIPT_DIR/i3wm/scripts/i3-alternating-layout"
+I3_ALTERNATING_LAYOUT_SCRIPT="$I3_ALTERNATING_LAYOUT_SUBMODULE_PATH/alternating_layouts.py"
 
 INTERACTIVE=true
 INSTALL_DEPS=false
@@ -15,6 +17,7 @@ APPLY_I3=true
 APPLY_I3STATUS=true
 APPLY_PICOM=true
 APPLY_DUNST=true
+APPLY_WEZTERM=true
 INSTALL_ROFI=true
 COPY_WALLPAPERS=true
 WITH_GNOME_SETTINGS=false
@@ -62,6 +65,7 @@ Opcoes:
   --no-i3status             Nao aplica config do i3status-rs
   --no-picom                Nao aplica config do picom
   --no-dunst                Nao aplica config do dunst
+  --no-wezterm              Nao aplica config do WezTerm
   --no-rofi                 Nao instala scripts do rofi
   --no-wallpapers           Nao copia wallpapers do repo
   --with-gnome-settings     Instala gnome-control-center
@@ -128,6 +132,32 @@ copy_dir() {
     cp -a "$src/." "$dest/"
   fi
   log "Diretorio sincronizado: $src -> $dest"
+}
+
+ensure_i3_alternating_layout_submodule() {
+  if [[ -f "$I3_ALTERNATING_LAYOUT_SCRIPT" ]]; then
+    return 0
+  fi
+
+  if ! command -v git >/dev/null 2>&1; then
+    log "git nao encontrado. Nao foi possivel inicializar o submodulo i3-alternating-layout."
+    return 1
+  fi
+
+  if [[ ! -d "$SCRIPT_DIR/.git" ]]; then
+    log "Checkout sem metadata git detectado. Clone o repositorio com --recursive para incluir o submodulo i3-alternating-layout."
+    return 1
+  fi
+
+  log "Inicializando submodulo i3-alternating-layout..."
+  git -C "$SCRIPT_DIR" submodule update --init --recursive -- i3wm/scripts/i3-alternating-layout
+
+  if [[ -f "$I3_ALTERNATING_LAYOUT_SCRIPT" ]]; then
+    return 0
+  fi
+
+  log "Nao foi possivel carregar o submodulo i3-alternating-layout."
+  return 1
 }
 
 install_apt_packages() {
@@ -210,6 +240,10 @@ while [[ $# -gt 0 ]]; do
       APPLY_DUNST=false
       shift
       ;;
+    --no-wezterm)
+      APPLY_WEZTERM=false
+      shift
+      ;;
     --no-rofi)
       INSTALL_ROFI=false
       shift
@@ -266,8 +300,8 @@ fi
 
 if [[ "$INSTALL_DEPS" == "true" ]]; then
   if [[ "$INTERACTIVE" == "true" ]]; then
-    if prompt_yes_no "Instalar i3 e utilitarios (i3 xss-lock dex numlockx feh)" "y"; then
-      install_apt_packages i3 xss-lock dex numlockx feh
+    if prompt_yes_no "Instalar i3 e utilitarios (git python3-i3ipc i3 xss-lock dex numlockx feh)" "y"; then
+      install_apt_packages git python3-i3ipc i3 xss-lock dex numlockx feh
     fi
 
     if prompt_yes_no "Instalar picom" "y"; then
@@ -315,7 +349,7 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
     fi
   else
     install_apt_packages \
-      i3 xss-lock dex numlockx feh \
+      git python3-i3ipc i3 xss-lock dex numlockx feh \
       picom \
       dunst \
       rofi \
@@ -342,6 +376,7 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
   fi
 
   log "Notas:"
+  log "- O instalador tenta inicializar automaticamente o submodulo i3-alternating-layout quando necessario."
   log "- i3lock-color precisa ser instalado manualmente (fork do i3lock)."
   log "- i3status-rs precisa ser instalado manualmente."
   log "- Brave/Chrome sao instalacao manual."
@@ -357,6 +392,14 @@ fi
 
 if [[ "$APPLY_I3" == "true" ]]; then
   copy_file "$SCRIPT_DIR/i3wm/config" "$CONFIG_DIR/i3/config"
+
+  if ensure_i3_alternating_layout_submodule; then
+    copy_dir "$SCRIPT_DIR/i3wm/scripts" "$CONFIG_DIR/i3/scripts"
+    chmod +x "$CONFIG_DIR/i3/scripts/i3-alternating-layout/alternating_layouts.py"
+    log "Scripts do i3 atualizados, incluindo o submodulo i3-alternating-layout."
+  else
+    log "Aviso: a config do i3 foi aplicada, mas o submodulo i3-alternating-layout nao estava disponivel para copia."
+  fi
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
@@ -400,6 +443,18 @@ fi
 
 if [[ "$APPLY_DUNST" == "true" ]]; then
   copy_file "$SCRIPT_DIR/dunst/dunstrc" "$CONFIG_DIR/dunst/dunstrc"
+fi
+
+if [[ "$INTERACTIVE" == "true" ]]; then
+  if prompt_yes_no "Aplicar config do WezTerm" "y"; then
+    APPLY_WEZTERM=true
+  else
+    APPLY_WEZTERM=false
+  fi
+fi
+
+if [[ "$APPLY_WEZTERM" == "true" ]]; then
+  copy_file "$SCRIPT_DIR/wezterm/.wezterm.lua" "$HOME/.wezterm.lua"
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
