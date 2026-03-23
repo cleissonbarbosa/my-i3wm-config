@@ -3,16 +3,16 @@ local config = wezterm.config_builder()
 
 config.adjust_window_size_when_changing_font_size = false
 
--- Removendo a barra de abas e bordas
+-- Removing the tab bar and borders
 config.hide_tab_bar_if_only_one_tab = true
 config.use_fancy_tab_bar = false
 config.show_tabs_in_tab_bar = false
-config.window_decorations = "RESIZE" -- Remove a barra de título superior
+config.window_decorations = "RESIZE" -- Removes the top title bar
 
--- Configuração da divisão (Split) para ser apenas uma linha fina
+-- Split configuration to keep only a thin divider line
 config.inactive_pane_hsb = {
   saturation = 1.0,
-  brightness = 1.0, -- Mantém o painel inativo com o mesmo brilho do ativo
+  brightness = 1.0, -- Keeps the inactive pane at the same brightness as the active one
 }
 config.window_padding = {
   left = 0,
@@ -21,13 +21,13 @@ config.window_padding = {
   bottom = 0,
 }
 
--- Estilo da borda de divisão
+-- Divider border style
 config.colors = {
-  -- Altere essa cor para combinar com o cinza da sua borda atual
+  -- Change this color to match the gray tone of your current border
   split = "#3d3846", 
 }
 
--- CONFIGURAÇÃO VISUAL
+-- VISUAL CONFIGURATION
 config.color_scheme = 'Gruvbox Dark (Gnome Terminal)' -- Base para bater com seu cursor #ebdbb2
 config.colors = {
     background = "#241f31",
@@ -36,7 +36,7 @@ config.colors = {
     cursor_fg = "#171421",
 }
 
--- Fonte (Sans Bold 10)
+-- Font (Sans Bold 10)
 config.font = wezterm.font_with_fallback({
     "JetBrains Mono",
     "DejaVu Sans Mono",
@@ -44,27 +44,27 @@ config.font = wezterm.font_with_fallback({
 })
 config.font_size = 10.0
 
--- Imagem de Fundo e Transparência
+-- Background Image and Transparency
 config.window_background_image_hsb = {
-    brightness = 0.1, -- Escurece a imagem para não atrapalhar o texto
+    brightness = 0.1, -- Darkens the image so it does not interfere with text readability
     saturation = 1.0,
     hue = 1.0,
 }
 config.window_background_opacity = 0.9
-config.text_background_opacity = 0.3 -- Deixa o texto legível sobre a imagem
+config.text_background_opacity = 0.3 -- Keeps the text readable over the image
 
--- Interface (Sem barra de título e sem scrollbar)
+-- Interface (No title bar and no scrollbar)
 config.enable_scroll_bar = false
 
--- ATALHOS DE TECLADO
+-- KEYBOARD SHORTCUTS
 config.keys = {
-    -- Split Vertical (Alt+E)
+    -- Vertical Split (Alt+E)
     { key = 'e', mods = 'ALT', action = wezterm.action.SplitVertical{ domain = 'CurrentPaneDomain' } },
-    -- Split Horizontal (Alt+O)
+    -- Horizontal Split (Alt+O)
     { key = 'o', mods = 'ALT', action = wezterm.action.SplitHorizontal{ domain = 'CurrentPaneDomain' } },
-    -- Fechar Painel (Alt+W)
+    -- Close Pane (Alt+W)
     { key = 'w', mods = 'ALT', action = wezterm.action.CloseCurrentPane{ confirm = true } },
-    -- Alternar entre painéis (Alt + Setas)
+    -- Switch between panes (Alt + Arrows)
     { key = 'LeftArrow', mods = 'ALT', action = wezterm.action.ActivatePaneDirection 'Left' },
     { key = 'RightArrow', mods = 'ALT', action = wezterm.action.ActivatePaneDirection 'Right' },
     { key = 'UpArrow', mods = 'ALT', action = wezterm.action.ActivatePaneDirection 'Up' },

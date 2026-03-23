@@ -240,7 +240,7 @@ Dual-monitor setup with both at **1920x1080 @ 144Hz**:
 
 ## Status Bar (i3status-rs)
 
-Position: **top** | Theme: **Dracula** | Icons: **Material**
+Position: **top** | Theme: **Dracula** | Icons: **Font Awesome**
 
 ### Configured Blocks
 
@@ -334,8 +334,12 @@ Configured features:
 
 ### Workflow
 
-![Work](./assets/img/i3wm-overview.png)
+![Work](./assets/img/i3wm-overview2.png)
 
 ### Lock Screen
 
 ![Lock Screen](./assets/img/lock-screen.png)
+
+### SPF
+
+![SPF](./assets/img/spf.png)

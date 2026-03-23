@@ -25,7 +25,7 @@ WITH_FLAMESHOT=false
 BUILD_PICOM=false
 PICOM_SRC_DIR="$HOME/.local/src/picom"
 
-# Dependencias de desenvolvimento necessárias para compilar o Picom v13
+# Development dependencies required to build Picom v13
 PICOM_DEV_PACKAGES=(
   meson
   ninja-build
@@ -55,24 +55,24 @@ log() {
 
 usage() {
   cat <<'EOF'
-Uso: ./install.sh [opcoes]
+Usage: ./install.sh [options]
 
-Opcoes:
-  --all                    Instala dependencias e aplica todas as configs
-  --non-interactive         Modo nao-interativo (usa defaults ou flags)
-  --no-deps                 Nao instala dependencias via apt
-  --no-i3                   Nao aplica config do i3
-  --no-i3status             Nao aplica config do i3status-rs
-  --no-picom                Nao aplica config do picom
-  --no-dunst                Nao aplica config do dunst
-  --no-wezterm              Nao aplica config do WezTerm
-  --no-rofi                 Nao instala scripts do rofi
-  --no-wallpapers           Nao copia wallpapers do repo
-  --with-gnome-settings     Instala gnome-control-center
-  --with-flameshot          Instala Flameshot via flatpak
-  --config-dir DIR          Define o diretorio base de config (default: ~/.config)
-  --wallpaper-dir DIR       Define o destino dos wallpapers
-  -h, --help                Mostra esta ajuda
+Options:
+  --all                    Install dependencies and apply all configs
+  --non-interactive        Non-interactive mode (uses defaults or flags)
+  --no-deps                Do not install dependencies via apt
+  --no-i3                  Do not apply the i3 config
+  --no-i3status            Do not apply the i3status-rs config
+  --no-picom               Do not apply the picom config
+  --no-dunst               Do not apply the dunst config
+  --no-wezterm             Do not apply the WezTerm config
+  --no-rofi                Do not install rofi scripts
+  --no-wallpapers          Do not copy wallpapers from the repo
+  --with-gnome-settings    Install gnome-control-center
+  --with-flameshot         Install Flameshot via flatpak
+  --config-dir DIR         Set the base config directory (default: ~/.config)
+  --wallpaper-dir DIR      Set the wallpaper destination directory
+  -h, --help               Show this help message
 EOF
 }
 
@@ -93,7 +93,7 @@ prompt_yes_no() {
     case "$answer" in
       y|Y) return 0 ;;
       n|N) return 1 ;;
-      *) log "Digite y ou n." ;;
+      *) log "Type y or n." ;;
     esac
   done
 }
@@ -109,7 +109,7 @@ backup_file() {
   local path="$1"
   if [[ -f "$path" || -L "$path" ]]; then
     mv "$path" "${path}.bak_${TIMESTAMP}"
-    log "Backup criado: ${path}.bak_${TIMESTAMP}"
+    log "Backup created: ${path}.bak_${TIMESTAMP}"
   fi
 }
 
@@ -119,7 +119,7 @@ copy_file() {
   ensure_dir "$(dirname "$dest")"
   backup_file "$dest"
   cp -f "$src" "$dest"
-  log "Copiado: $src -> $dest"
+  log "Copied: $src -> $dest"
 }
 
 copy_dir() {
@@ -131,7 +131,7 @@ copy_dir() {
   else
     cp -a "$src/." "$dest/"
   fi
-  log "Diretorio sincronizado: $src -> $dest"
+  log "Directory synchronized: $src -> $dest"
 }
 
 ensure_i3_alternating_layout_submodule() {
@@ -140,23 +140,23 @@ ensure_i3_alternating_layout_submodule() {
   fi
 
   if ! command -v git >/dev/null 2>&1; then
-    log "git nao encontrado. Nao foi possivel inicializar o submodulo i3-alternating-layout."
+    log "git not found. Could not initialize the i3-alternating-layout submodule."
     return 1
   fi
 
   if [[ ! -d "$SCRIPT_DIR/.git" ]]; then
-    log "Checkout sem metadata git detectado. Clone o repositorio com --recursive para incluir o submodulo i3-alternating-layout."
+    log "Checkout without git metadata detected. Clone the repository with --recursive to include the i3-alternating-layout submodule."
     return 1
   fi
 
-  log "Inicializando submodulo i3-alternating-layout..."
+  log "Initializing i3-alternating-layout submodule..."
   git -C "$SCRIPT_DIR" submodule update --init --recursive -- i3wm/scripts/i3-alternating-layout
 
   if [[ -f "$I3_ALTERNATING_LAYOUT_SCRIPT" ]]; then
     return 0
   fi
 
-  log "Nao foi possivel carregar o submodulo i3-alternating-layout."
+  log "Could not load the i3-alternating-layout submodule."
   return 1
 }
 
@@ -166,44 +166,44 @@ install_apt_packages() {
     return 0
   fi
   if ! command -v apt >/dev/null 2>&1; then
-    log "apt nao encontrado. Pulei instalacao de pacotes."
+    log "apt not found. Skipping package installation."
     return 0
   fi
-  log "Instalando pacotes: ${packages[*]}"
+  log "Installing packages: ${packages[*]}"
   sudo apt update
   sudo apt install -y "${packages[@]}"
 }
 
 build_picom_from_source() {
-  log "Compilando Picom v13 a partir do fonte em: $PICOM_SRC_DIR"
+  log "Building Picom v13 from source in: $PICOM_SRC_DIR"
   ensure_dir "$(dirname "$PICOM_SRC_DIR")"
 
   if [[ -d "$PICOM_SRC_DIR/.git" ]]; then
-    log "Repositorio existente encontrado, atualizando..."
+    log "Existing repository found, updating..."
     git -C "$PICOM_SRC_DIR" fetch --tags --all || true
     git -C "$PICOM_SRC_DIR" checkout v13 2>/dev/null || true
     git -C "$PICOM_SRC_DIR" pull --ff-only || true
   else
-    log "Clonando picom..."
+    log "Cloning picom..."
     if ! git clone git@github.com:yshui/picom.git "$PICOM_SRC_DIR" >/dev/null 2>&1; then
-      log "Clone via SSH falhou, tentando HTTPS..."
+      log "SSH clone failed, trying HTTPS..."
       git clone https://github.com/yshui/picom.git "$PICOM_SRC_DIR"
     fi
     git -C "$PICOM_SRC_DIR" fetch --tags --all || true
     git -C "$PICOM_SRC_DIR" checkout v13 2>/dev/null || true
   fi
 
-  log "Configurando meson..."
+  log "Configuring meson..."
   (cd "$PICOM_SRC_DIR" && meson setup --buildtype=release build) || (cd "$PICOM_SRC_DIR" && meson setup build --buildtype=release)
-  log "Compilando com ninja..."
+  log "Building with ninja..."
   ninja -C "$PICOM_SRC_DIR/build"
-  log "Instalando (requer sudo)..."
+  log "Installing (requires sudo)..."
   sudo ninja -C "$PICOM_SRC_DIR/build" install
-  log "Picom compilado e instalado com sucesso."
+  log "Picom built and installed successfully."
 }
 
-log "==== Instalador i3wm config ===="
-log "Diretorio do repo: $SCRIPT_DIR"
+log "==== i3wm config installer ===="
+log "Repository directory: $SCRIPT_DIR"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -277,7 +277,7 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     *)
-      log "Opcao desconhecida: $1"
+      log "Unknown option: $1"
       usage
       exit 1
       ;;
@@ -286,65 +286,65 @@ done
 
 CONFIG_DIR="$CONFIG_DIR_DEFAULT"
 if [[ "$INTERACTIVE" == "true" ]]; then
-  read -r -p "Diretorio base de config [$CONFIG_DIR_DEFAULT]: " CONFIG_DIR_INPUT || true
+  read -r -p "Base config directory [$CONFIG_DIR_DEFAULT]: " CONFIG_DIR_INPUT || true
   if [[ -n "$CONFIG_DIR_INPUT" ]]; then
     CONFIG_DIR="$CONFIG_DIR_INPUT"
   fi
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
-  if prompt_yes_no "Instalar dependencias via apt" "n"; then
+  if prompt_yes_no "Install dependencies via apt" "n"; then
     INSTALL_DEPS=true
   fi
 fi
 
 if [[ "$INSTALL_DEPS" == "true" ]]; then
   if [[ "$INTERACTIVE" == "true" ]]; then
-    if prompt_yes_no "Instalar i3 e utilitarios (git python3-i3ipc i3 xss-lock dex numlockx feh)" "y"; then
+    if prompt_yes_no "Install i3 and utilities (git python3-i3ipc i3 xss-lock dex numlockx feh)" "y"; then
       install_apt_packages git python3-i3ipc i3 xss-lock dex numlockx feh
     fi
 
-    if prompt_yes_no "Instalar picom" "y"; then
+    if prompt_yes_no "Install picom" "y"; then
       install_apt_packages picom
     fi
 
-    if prompt_yes_no "Compilar Picom v13 a partir do fonte (requer dependencias de desenvolvimento)" "n"; then
+    if prompt_yes_no "Build Picom v13 from source (requires development dependencies)" "n"; then
       BUILD_PICOM=true
     fi
 
-    if prompt_yes_no "Instalar dunst" "y"; then
+    if prompt_yes_no "Install dunst" "y"; then
       install_apt_packages dunst
     fi
 
-    if prompt_yes_no "Instalar rofi" "y"; then
+    if prompt_yes_no "Install rofi" "y"; then
       install_apt_packages rofi
     fi
 
-    if prompt_yes_no "Instalar controle de volume e midia (pulseaudio-utils playerctl)" "y"; then
+    if prompt_yes_no "Install volume and media control tools (pulseaudio-utils playerctl)" "y"; then
       install_apt_packages pulseaudio-utils playerctl
     fi
 
-    if prompt_yes_no "Instalar controle de brilho (light)" "y"; then
+    if prompt_yes_no "Install brightness control (light)" "y"; then
       install_apt_packages light
     fi
 
-    if prompt_yes_no "Instalar network-manager-gnome" "y"; then
+    if prompt_yes_no "Install network-manager-gnome" "y"; then
       install_apt_packages network-manager-gnome
     fi
 
-    if prompt_yes_no "Instalar gnome-control-center (opcional)" "n"; then
+    if prompt_yes_no "Install gnome-control-center (optional)" "n"; then
       install_apt_packages gnome-control-center
     fi
 
-    if prompt_yes_no "Instalar fontes Material Design Icons" "y"; then
+    if prompt_yes_no "Install Material Design Icons fonts" "y"; then
       install_apt_packages fonts-material-design-icons-iconfont
     fi
 
-    if prompt_yes_no "Instalar Flameshot via flatpak" "n"; then
+    if prompt_yes_no "Install Flameshot via flatpak" "n"; then
       if command -v flatpak >/dev/null 2>&1; then
         flatpak install -y flathub org.flameshot.Flameshot
       else
-        log "flatpak nao encontrado. Pulei Flameshot."
+        log "flatpak not found. Skipping Flameshot."
       fi
     fi
   else
@@ -366,7 +366,7 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
       if command -v flatpak >/dev/null 2>&1; then
         flatpak install -y flathub org.flameshot.Flameshot
       else
-        log "flatpak nao encontrado. Pulei Flameshot."
+        log "flatpak not found. Skipping Flameshot."
       fi
     fi
 
@@ -375,15 +375,15 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
     fi
   fi
 
-  log "Notas:"
-  log "- O instalador tenta inicializar automaticamente o submodulo i3-alternating-layout quando necessario."
-  log "- i3lock-color precisa ser instalado manualmente (fork do i3lock)."
-  log "- i3status-rs precisa ser instalado manualmente."
-  log "- Brave/Chrome sao instalacao manual."
+  log "Notes:"
+  log "- The installer tries to initialize the i3-alternating-layout submodule automatically when needed."
+  log "- i3lock-color must be installed manually (fork of i3lock)."
+  log "- i3status-rs must be installed manually."
+  log "- Brave/Chrome must be installed manually."
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
-  if prompt_yes_no "Aplicar config do i3" "y"; then
+  if prompt_yes_no "Apply the i3 config" "y"; then
     APPLY_I3=true
   else
     APPLY_I3=false
@@ -396,14 +396,14 @@ if [[ "$APPLY_I3" == "true" ]]; then
   if ensure_i3_alternating_layout_submodule; then
     copy_dir "$SCRIPT_DIR/i3wm/scripts" "$CONFIG_DIR/i3/scripts"
     chmod +x "$CONFIG_DIR/i3/scripts/i3-alternating-layout/alternating_layouts.py"
-    log "Scripts do i3 atualizados, incluindo o submodulo i3-alternating-layout."
+    log "i3 scripts updated, including the i3-alternating-layout submodule."
   else
-    log "Aviso: a config do i3 foi aplicada, mas o submodulo i3-alternating-layout nao estava disponivel para copia."
+    log "Warning: the i3 config was applied, but the i3-alternating-layout submodule was not available to copy."
   fi
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
-  if prompt_yes_no "Aplicar config do i3status-rs" "y"; then
+  if prompt_yes_no "Apply the i3status-rs config" "y"; then
     APPLY_I3STATUS=true
   else
     APPLY_I3STATUS=false
@@ -415,7 +415,7 @@ if [[ "$APPLY_I3STATUS" == "true" ]]; then
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
-  if prompt_yes_no "Aplicar config do picom" "y"; then
+  if prompt_yes_no "Apply the picom config" "y"; then
     APPLY_PICOM=true
   else
     APPLY_PICOM=false
@@ -434,7 +434,7 @@ if [[ "$BUILD_PICOM" == "true" ]]; then
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
-  if prompt_yes_no "Aplicar config do dunst" "y"; then
+  if prompt_yes_no "Apply the dunst config" "y"; then
     APPLY_DUNST=true
   else
     APPLY_DUNST=false
@@ -446,7 +446,7 @@ if [[ "$APPLY_DUNST" == "true" ]]; then
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
-  if prompt_yes_no "Aplicar config do WezTerm" "y"; then
+  if prompt_yes_no "Apply the WezTerm config" "y"; then
     APPLY_WEZTERM=true
   else
     APPLY_WEZTERM=false
@@ -458,7 +458,7 @@ if [[ "$APPLY_WEZTERM" == "true" ]]; then
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
-  if prompt_yes_no "Instalar scripts do rofi" "y"; then
+  if prompt_yes_no "Install rofi scripts" "y"; then
     INSTALL_ROFI=true
   else
     INSTALL_ROFI=false
@@ -475,11 +475,11 @@ if [[ "$INSTALL_ROFI" == "true" ]]; then
   copy_file "$SCRIPT_DIR/rofi/rofi-askpass" "$ROFI_ASKPASS_DEST"
 
   chmod +x "$ROFI_LAUNCHER_DEST" "$ROFI_SUDO_LAUNCHER_DEST" "$ROFI_ASKPASS_DEST"
-  log "Permissoes de execucao aplicadas nos scripts do rofi."
+  log "Execution permissions applied to the rofi scripts."
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
-  if prompt_yes_no "Copiar wallpapers do repo" "y"; then
+  if prompt_yes_no "Copy wallpapers from the repo" "y"; then
     COPY_WALLPAPERS=true
   else
     COPY_WALLPAPERS=false
@@ -489,15 +489,15 @@ fi
 if [[ "$COPY_WALLPAPERS" == "true" ]]; then
   if [[ -d "$SCRIPT_DIR/desktop-wallpapers" ]]; then
     if [[ "$INTERACTIVE" == "true" ]]; then
-      read -r -p "Destino dos wallpapers [$WALLPAPER_DEFAULT_DIR]: " WALLPAPER_DIR_INPUT || true
+      read -r -p "Wallpaper destination [$WALLPAPER_DEFAULT_DIR]: " WALLPAPER_DIR_INPUT || true
       if [[ -n "$WALLPAPER_DIR_INPUT" ]]; then
         WALLPAPER_DEFAULT_DIR="$WALLPAPER_DIR_INPUT"
       fi
     fi
     copy_dir "$SCRIPT_DIR/desktop-wallpapers" "$WALLPAPER_DEFAULT_DIR"
   else
-    log "Diretorio desktop-wallpapers nao encontrado."
+    log "desktop-wallpapers directory not found."
   fi
 fi
 
-log "Instalacao concluida. Recarregue o i3 com Mod+Shift+r."
+log "Installation complete. Reload i3 with Mod+Shift+r."

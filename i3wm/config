@@ -277,17 +277,17 @@ mode "resize" {
 bindsym $mod+r mode "resize"
 
 
-# Desativar barras de título (necessário para o funcionamento correto dos gaps)
+# Disable title bars (required for gaps to work correctly)
 for_window [class=".*"] border pixel 0
 smart_borders on
 default_border none
 default_floating_border none
 
 
-# Espaçamento entre janelas (Inner Gaps)
+# Spacing between windows (Inner Gaps)
 gaps inner 10
 
-# Espaçamento entre as janelas e as bordas da tela (Outer Gaps)
+# Spacing between windows and screen edges (Outer Gaps)
 gaps outer 5
 
 smart_gaps on
@@ -319,7 +319,7 @@ bar {
 }
 
 exec_always --no-startup-id xrandr --output DP-0 --left-of DP-4
-# Configuração de taxa de atualização 144Hz
+# 144Hz refresh rate configuration
 exec_always --no-startup-id xrandr --output DP-0 --mode 1920x1080 --rate 144.00
 exec_always --no-startup-id xrandr --output DP-4 --mode 1920x1080 --rate 144.00
 exec_always --no-startup-id ~/.config/i3/scripts/i3-alternating-layout/alternating_layouts.py

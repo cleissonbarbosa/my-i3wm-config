@@ -1,5 +1,5 @@
 #!/bin/bash
-rofi -show drun -theme-str '
+rofi -show combi -combi-modi "window,drun,run" -modi combi -show-icons -theme-str '
   * {
     background-color: #282A36;
     text-color: #F8F8F2;
@@ -41,5 +41,4 @@ rofi -show drun -theme-str '
     cursor: pointer;
     text-color: #F8F8F2;
   }
-' -display-drun "Apps: "
-
+' -display-combi "🔍: " -display-run "Run: " -display-window "Windows: " -display-drun "App: "

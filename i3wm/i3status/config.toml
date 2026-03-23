@@ -2,7 +2,7 @@
 theme = "dracula"
 
 [icons]
-icons = "awesome6" # Requer font-awesome instalado
+icons = "awesome6" # Requires font-awesome to be installed
 
 [[block]]
 block = "disk_space"
@@ -24,7 +24,7 @@ block = "cpu"
 format = " CPU: $utilization "
 interval = 5
 
-# Bloco de GPU 
+# GPU block requires nvidia-smi to be installed and in PATH
 [[block]]
 block = "nvidia_gpu"
 format = " GPU: $utilization/$temperature"
@@ -32,7 +32,7 @@ interval = 5
 
 [[block]]
 block = "net"
-device = "enp7s0" # Verifique o nome da sua interface com 'ip link'
+device = "enp7s0" # check your interface with 'ip link'
 format = " ED: $graph_down($speed_down) "
 format_alt = " EU: $graph_up($speed_up) "
 interval = 5

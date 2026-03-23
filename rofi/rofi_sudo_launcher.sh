@@ -1,6 +1,6 @@
 #!/bin/bash
 export SUDO_ASKPASS="$HOME/.local/bin/rofi-askpass"
-rofi -show drun -run-command "sudo -A {cmd}" -theme-str '
+rofi -show combi -combi-modi "window,drun,run" -modi combi -show-icons -run-command "sudo -A {cmd}" -theme-str '
   * {
     background-color: #282A36;
     text-color: #F8F8F2;
@@ -42,5 +42,5 @@ rofi -show drun -run-command "sudo -A {cmd}" -theme-str '
     cursor: pointer;
     text-color: #F8F8F2;
   }
-' -display-drun "Apps SUDO: "
+' -display-drun "Apps SUDO: " -display-run "Run SUDO: " -display-window "Windows SUDO: " -display-combi "🔍: "
 
