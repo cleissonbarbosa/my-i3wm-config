@@ -1,0 +1,6 @@
+# Tooling caches
+.mypy_cache/
+__pycache__/
+
+# Backups created by install.sh
+*.bak_*

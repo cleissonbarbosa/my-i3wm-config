@@ -6,7 +6,7 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 CONFIG_DIR_DEFAULT="$HOME/.config"
-ROFI_ASKPASS_DEFAULT="$HOME/.local/bin/rofi-askpass"
+LOCAL_BIN_DIR="$HOME/.local/bin"
 WALLPAPER_DEFAULT_DIR="$HOME/Pictures/desktop background"
 I3_ALTERNATING_LAYOUT_SUBMODULE_PATH="$SCRIPT_DIR/i3wm/scripts/i3-alternating-layout"
 I3_ALTERNATING_LAYOUT_SCRIPT="$I3_ALTERNATING_LAYOUT_SUBMODULE_PATH/alternating_layouts.py"
@@ -23,6 +23,9 @@ COPY_WALLPAPERS=true
 WITH_GNOME_SETTINGS=false
 WITH_FLAMESHOT=false
 BUILD_PICOM=false
+# Symlink configs into place so the repository stays the single source of
+# truth. Use --copy for standalone copies (the old behavior).
+USE_SYMLINK=true
 PICOM_SRC_DIR="$HOME/.local/src/picom"
 
 # Development dependencies required to build Picom v13
@@ -60,6 +63,7 @@ Usage: ./install.sh [options]
 Options:
   --all                    Install dependencies and apply all configs
   --non-interactive        Non-interactive mode (uses defaults or flags)
+  --copy                   Copy files instead of symlinking them (default: symlink)
   --no-deps                Do not install dependencies via apt
   --no-i3                  Do not apply the i3 config
   --no-i3status            Do not apply the i3status-rs config
@@ -105,33 +109,65 @@ ensure_dir() {
   fi
 }
 
-backup_file() {
+backup_path() {
   local path="$1"
-  if [[ -f "$path" || -L "$path" ]]; then
+  if [[ -e "$path" || -L "$path" ]]; then
     mv "$path" "${path}.bak_${TIMESTAMP}"
     log "Backup created: ${path}.bak_${TIMESTAMP}"
   fi
 }
 
-copy_file() {
+# Symlink (default) or copy a single file into place, backing up the previous one.
+install_file() {
   local src="$1"
   local dest="$2"
   ensure_dir "$(dirname "$dest")"
-  backup_file "$dest"
-  cp -f "$src" "$dest"
-  log "Copied: $src -> $dest"
+  if [[ "$USE_SYMLINK" == "true" ]]; then
+    if [[ -L "$dest" && "$(readlink -f "$dest")" == "$(readlink -f "$src")" ]]; then
+      log "Already linked: $dest"
+      return 0
+    fi
+    backup_path "$dest"
+    ln -sn "$src" "$dest"
+    log "Linked: $dest -> $src"
+  else
+    backup_path "$dest"
+    cp -f "$src" "$dest"
+    log "Copied: $src -> $dest"
+  fi
 }
 
+# Symlink (default) or synchronize a directory into place.
+install_dir() {
+  local src="$1"
+  local dest="$2"
+  if [[ "$USE_SYMLINK" == "true" ]]; then
+    if [[ -L "$dest" && "$(readlink -f "$dest")" == "$(readlink -f "$src")" ]]; then
+      log "Already linked: $dest"
+      return 0
+    fi
+    ensure_dir "$(dirname "$dest")"
+    backup_path "$dest"
+    ln -sn "$src" "$dest"
+    log "Linked: $dest -> $src"
+  else
+    ensure_dir "$dest"
+    if command -v rsync >/dev/null 2>&1; then
+      rsync -a --delete "$src/" "$dest/"
+    else
+      cp -a "$src/." "$dest/"
+    fi
+    log "Directory synchronized: $src -> $dest"
+  fi
+}
+
+# Always copies (never symlinks): the user adds their own files to this directory.
 copy_dir() {
   local src="$1"
   local dest="$2"
   ensure_dir "$dest"
-  if command -v rsync >/dev/null 2>&1; then
-    rsync -a --delete "$src/" "$dest/"
-  else
-    cp -a "$src/." "$dest/"
-  fi
-  log "Directory synchronized: $src -> $dest"
+  cp -a "$src/." "$dest/"
+  log "Directory copied: $src -> $dest"
 }
 
 ensure_i3_alternating_layout_submodule() {
@@ -174,6 +210,34 @@ install_apt_packages() {
   sudo apt install -y "${packages[@]}"
 }
 
+# Download JetBrainsMono Nerd Font to ~/.local/share/fonts (no sudo needed).
+# It provides the bar icons (material-nf) and all fonts used by this setup.
+install_nerd_font() {
+  if fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd"; then
+    log "JetBrainsMono Nerd Font is already installed."
+    return 0
+  fi
+  if ! command -v curl >/dev/null 2>&1 || ! command -v unzip >/dev/null 2>&1; then
+    log "curl/unzip not found. Install JetBrainsMono Nerd Font manually: https://www.nerdfonts.com/font-downloads"
+    return 1
+  fi
+
+  local font_dir="$HOME/.local/share/fonts/JetBrainsMonoNerdFont"
+  local tmp_zip
+  tmp_zip=$(mktemp --suffix=.zip)
+
+  log "Downloading JetBrainsMono Nerd Font..."
+  if curl -fsSL -o "$tmp_zip" "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"; then
+    ensure_dir "$font_dir"
+    unzip -o "$tmp_zip" -d "$font_dir" >/dev/null
+    fc-cache -f >/dev/null 2>&1 || true
+    log "JetBrainsMono Nerd Font installed in $font_dir."
+  else
+    log "Download failed. Install manually: https://www.nerdfonts.com/font-downloads"
+  fi
+  rm -f "$tmp_zip"
+}
+
 build_picom_from_source() {
   log "Building Picom v13 from source in: $PICOM_SRC_DIR"
   ensure_dir "$(dirname "$PICOM_SRC_DIR")"
@@ -212,12 +276,18 @@ while [[ $# -gt 0 ]]; do
       APPLY_I3=true
       APPLY_I3STATUS=true
       APPLY_PICOM=true
+      APPLY_DUNST=true
+      APPLY_WEZTERM=true
       INSTALL_ROFI=true
       COPY_WALLPAPERS=true
       shift
       ;;
     --non-interactive)
       INTERACTIVE=false
+      shift
+      ;;
+    --copy)
+      USE_SYMLINK=false
       shift
       ;;
     --no-deps)
@@ -312,16 +382,16 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
       BUILD_PICOM=true
     fi
 
-    if prompt_yes_no "Install dunst" "y"; then
-      install_apt_packages dunst
+    if prompt_yes_no "Install dunst (and jq, used by the notification history script)" "y"; then
+      install_apt_packages dunst jq
     fi
 
     if prompt_yes_no "Install rofi" "y"; then
       install_apt_packages rofi
     fi
 
-    if prompt_yes_no "Install volume and media control tools (pulseaudio-utils playerctl)" "y"; then
-      install_apt_packages pulseaudio-utils playerctl
+    if prompt_yes_no "Install volume and media control tools (wireplumber playerctl)" "y"; then
+      install_apt_packages wireplumber playerctl
     fi
 
     if prompt_yes_no "Install brightness control (light)" "y"; then
@@ -336,8 +406,8 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
       install_apt_packages gnome-control-center
     fi
 
-    if prompt_yes_no "Install Material Design Icons fonts" "y"; then
-      install_apt_packages fonts-material-design-icons-iconfont
+    if prompt_yes_no "Download JetBrainsMono Nerd Font to ~/.local/share/fonts" "y"; then
+      install_nerd_font
     fi
 
     if prompt_yes_no "Install Flameshot via flatpak" "n"; then
@@ -351,12 +421,13 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
     install_apt_packages \
       git python3-i3ipc i3 xss-lock dex numlockx feh \
       picom \
-      dunst \
+      dunst jq \
       rofi \
-      pulseaudio-utils playerctl \
+      wireplumber playerctl \
       light \
-      network-manager-gnome \
-      fonts-material-design-icons-iconfont
+      network-manager-gnome
+
+    install_nerd_font
 
     if [[ "$WITH_GNOME_SETTINGS" == "true" ]]; then
       install_apt_packages gnome-control-center
@@ -368,10 +439,6 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
       else
         log "flatpak not found. Skipping Flameshot."
       fi
-    fi
-
-    if [[ "$BUILD_PICOM" == "true" ]]; then
-      install_apt_packages "${PICOM_DEV_PACKAGES[@]}"
     fi
   fi
 
@@ -391,11 +458,13 @@ if [[ "$INTERACTIVE" == "true" ]]; then
 fi
 
 if [[ "$APPLY_I3" == "true" ]]; then
-  copy_file "$SCRIPT_DIR/i3wm/config" "$CONFIG_DIR/i3/config"
+  install_file "$SCRIPT_DIR/i3wm/config" "$CONFIG_DIR/i3/config"
 
   if ensure_i3_alternating_layout_submodule; then
-    copy_dir "$SCRIPT_DIR/i3wm/scripts" "$CONFIG_DIR/i3/scripts"
-    chmod +x "$CONFIG_DIR/i3/scripts/i3-alternating-layout/alternating_layouts.py"
+    install_dir "$SCRIPT_DIR/i3wm/scripts" "$CONFIG_DIR/i3/scripts"
+    chmod +x "$CONFIG_DIR/i3/scripts/i3-alternating-layout/alternating_layouts.py" \
+             "$CONFIG_DIR/i3/scripts/lock-screen.sh" \
+             "$CONFIG_DIR/i3/scripts/wallpaper-slideshow.sh"
     log "i3 scripts updated, including the i3-alternating-layout submodule."
   else
     log "Warning: the i3 config was applied, but the i3-alternating-layout submodule was not available to copy."
@@ -411,7 +480,7 @@ if [[ "$INTERACTIVE" == "true" ]]; then
 fi
 
 if [[ "$APPLY_I3STATUS" == "true" ]]; then
-  copy_file "$SCRIPT_DIR/i3wm/i3status/config.toml" "$CONFIG_DIR/i3status/config.toml"
+  install_file "$SCRIPT_DIR/i3wm/i3status/config.toml" "$CONFIG_DIR/i3status/config.toml"
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
@@ -423,7 +492,7 @@ if [[ "$INTERACTIVE" == "true" ]]; then
 fi
 
 if [[ "$APPLY_PICOM" == "true" ]]; then
-  copy_file "$SCRIPT_DIR/picom/picom.conf" "$CONFIG_DIR/picom/picom.conf"
+  install_file "$SCRIPT_DIR/picom/picom.conf" "$CONFIG_DIR/picom/picom.conf"
 fi
 
 if [[ "$BUILD_PICOM" == "true" ]]; then
@@ -442,7 +511,9 @@ if [[ "$INTERACTIVE" == "true" ]]; then
 fi
 
 if [[ "$APPLY_DUNST" == "true" ]]; then
-  copy_file "$SCRIPT_DIR/dunst/dunstrc" "$CONFIG_DIR/dunst/dunstrc"
+  install_file "$SCRIPT_DIR/dunst/dunstrc" "$CONFIG_DIR/dunst/dunstrc"
+  install_file "$SCRIPT_DIR/dunst/dunst-history.sh" "$LOCAL_BIN_DIR/dunst-history.sh"
+  chmod +x "$LOCAL_BIN_DIR/dunst-history.sh"
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
@@ -454,7 +525,7 @@ if [[ "$INTERACTIVE" == "true" ]]; then
 fi
 
 if [[ "$APPLY_WEZTERM" == "true" ]]; then
-  copy_file "$SCRIPT_DIR/wezterm/.wezterm.lua" "$HOME/.wezterm.lua"
+  install_file "$SCRIPT_DIR/wezterm/.wezterm.lua" "$HOME/.wezterm.lua"
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
@@ -466,16 +537,21 @@ if [[ "$INTERACTIVE" == "true" ]]; then
 fi
 
 if [[ "$INSTALL_ROFI" == "true" ]]; then
-  ROFI_LAUNCHER_DEST="$HOME/rofi_launcher.sh"
-  ROFI_SUDO_LAUNCHER_DEST="$HOME/rofi_sudo_launcher.sh"
-  ROFI_ASKPASS_DEST="$ROFI_ASKPASS_DEFAULT"
+  install_file "$SCRIPT_DIR/rofi/dracula.rasi" "$CONFIG_DIR/rofi/dracula.rasi"
+  install_file "$SCRIPT_DIR/rofi/rofi_launcher.sh" "$LOCAL_BIN_DIR/rofi_launcher.sh"
+  install_file "$SCRIPT_DIR/rofi/rofi_sudo_launcher.sh" "$LOCAL_BIN_DIR/rofi_sudo_launcher.sh"
+  install_file "$SCRIPT_DIR/rofi/rofi-askpass" "$LOCAL_BIN_DIR/rofi-askpass"
 
-  copy_file "$SCRIPT_DIR/rofi/rofi_launcher.sh" "$ROFI_LAUNCHER_DEST"
-  copy_file "$SCRIPT_DIR/rofi/rofi_sudo_launcher.sh" "$ROFI_SUDO_LAUNCHER_DEST"
-  copy_file "$SCRIPT_DIR/rofi/rofi-askpass" "$ROFI_ASKPASS_DEST"
-
-  chmod +x "$ROFI_LAUNCHER_DEST" "$ROFI_SUDO_LAUNCHER_DEST" "$ROFI_ASKPASS_DEST"
+  chmod +x "$LOCAL_BIN_DIR/rofi_launcher.sh" "$LOCAL_BIN_DIR/rofi_sudo_launcher.sh" "$LOCAL_BIN_DIR/rofi-askpass"
   log "Execution permissions applied to the rofi scripts."
+
+  # Older versions of this installer put the launchers directly in $HOME.
+  for legacy in "$HOME/rofi_launcher.sh" "$HOME/rofi_sudo_launcher.sh"; do
+    if [[ -e "$legacy" || -L "$legacy" ]]; then
+      backup_path "$legacy"
+      log "Legacy launcher moved out of \$HOME: $legacy"
+    fi
+  done
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then

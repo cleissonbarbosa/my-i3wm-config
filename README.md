@@ -2,7 +2,7 @@
 
 ![i3wm Overview](./assets/img/i3wm-overview.png)
 
-My personal configuration for i3 (i3-gaps). I use the Dracula theme, Picom as a compositor, i3status-rs for the status bar, and Rofi as a launcher. This repository provides ready-to-copy scripts and configuration files for `~/.config` and `~/.local/bin`.
+My personal configuration for i3 (i3-gaps). I use the Dracula theme, Picom as a compositor, i3status-rs for the status bar, and Rofi as a launcher. The installer symlinks the configuration files into `~/.config` and `~/.local/bin` by default, so the repository stays the single source of truth (use `--copy` for standalone copies).
 
 The alternating split behavior is provided by the upstream project [olemartinorg/i3-alternating-layout](https://github.com/olemartinorg/i3-alternating-layout), which is now included here as a Git submodule in `i3wm/scripts/i3-alternating-layout`.
 
@@ -52,6 +52,9 @@ Non-interactive mode with flags (examples):
 # Apply configs without dependencies
 ./install.sh --non-interactive --no-deps
 
+# Copy files instead of symlinking (default is symlink)
+./install.sh --non-interactive --no-deps --copy
+
 # Customize directories
 ./install.sh --non-interactive --config-dir "$HOME/.config" --wallpaper-dir "$HOME/Pictures/desktop background"
 
@@ -82,8 +85,11 @@ sudo apt install rofi
 # Status bar (i3status-rs)
 # See: https://github.com/greshake/i3status-rust#installation
 
-# Volume and media control
-sudo apt install pulseaudio-utils playerctl
+# Volume and media control (wpctl comes with WirePlumber/PipeWire)
+sudo apt install wireplumber playerctl
+
+# Notification history script
+sudo apt install jq
 
 # Brightness control
 sudo apt install light
@@ -101,42 +107,37 @@ flatpak install flathub org.flameshot.Flameshot
 # Install Brave and/or Google Chrome manually
 
 # Fonts (required for icons and text in the bar)
-# JetBrainsMono Nerd Font: https://www.nerdfonts.com/font-downloads
-sudo apt install fonts-material-design-icons-iconfont
+# The installer downloads JetBrainsMono Nerd Font to ~/.local/share/fonts automatically.
+# Manual install: https://www.nerdfonts.com/font-downloads
 ```
 
-### Applying the Configurations
+### Applying the Configurations Manually
 
-Clone the repository and copy the files:
+The installer symlinks everything for you, but the manual equivalent is:
 
 ```bash
 # Clone the repository with submodules
 git clone --recursive https://github.com/cleissonbarbosa/my-i3wm-config.git
+cd my-i3wm-config
 
 # If needed later
-git -C my-i3wm-config submodule update --init --recursive
+git submodule update --init --recursive
 
-# Copy configuration files
-cp my-i3wm-config/i3wm/config ~/.config/i3/config
-cp my-i3wm-config/i3wm/i3status/config.toml ~/.config/i3status/config.toml
-cp my-i3wm-config/picom/picom.conf ~/.config/picom/picom.conf
-cp my-i3wm-config/wezterm/.wezterm.lua ~/.wezterm.lua
+# Symlink configuration files (repository stays the source of truth)
+mkdir -p ~/.config/i3 ~/.config/i3status ~/.config/picom ~/.config/dunst ~/.config/rofi ~/.local/bin
+ln -sn "$PWD/i3wm/config" ~/.config/i3/config
+ln -sn "$PWD/i3wm/scripts" ~/.config/i3/scripts
+ln -sn "$PWD/i3wm/i3status/config.toml" ~/.config/i3status/config.toml
+ln -sn "$PWD/picom/picom.conf" ~/.config/picom/picom.conf
+ln -sn "$PWD/dunst/dunstrc" ~/.config/dunst/dunstrc
+ln -sn "$PWD/wezterm/.wezterm.lua" ~/.wezterm.lua
 
-# Copy i3 helper scripts, including the upstream alternating layout submodule
-mkdir -p ~/.config/i3/scripts
-cp -r my-i3wm-config/i3wm/scripts/. ~/.config/i3/scripts/
-chmod +x ~/.config/i3/scripts/i3-alternating-layout/alternating_layouts.py
-
-# Rofi scripts
-cp my-i3wm-config/rofi/rofi_launcher.sh ~/rofi_launcher.sh
-cp my-i3wm-config/rofi/rofi_sudo_launcher.sh ~/rofi_sudo_launcher.sh
-cp my-i3wm-config/rofi/rofi-askpass ~/.local/bin/rofi-askpass
-
-# Make scripts executable
-chmod +x ~/rofi_launcher.sh ~/rofi_sudo_launcher.sh ~/.local/bin/rofi-askpass
-
-# Reload i3
-# $mod+Shift+r
+# Rofi theme and scripts (all executables live in ~/.local/bin)
+ln -sn "$PWD/rofi/dracula.rasi" ~/.config/rofi/dracula.rasi
+ln -sn "$PWD/rofi/rofi_launcher.sh" ~/.local/bin/rofi_launcher.sh
+ln -sn "$PWD/rofi/rofi_sudo_launcher.sh" ~/.local/bin/rofi_sudo_launcher.sh
+ln -sn "$PWD/rofi/rofi-askpass" ~/.local/bin/rofi-askpass
+ln -sn "$PWD/dunst/dunst-history.sh" ~/.local/bin/dunst-history.sh
 ```
 
 Reload i3 with `$mod+Shift+r`.
@@ -172,7 +173,10 @@ The installer copies this file to `~/.wezterm.lua`.
 | `$mod + Shift+q`   | Close focused window           |
 | `$mod + d`         | Open Rofi (launcher)           |
 | `$mod + Shift+d`   | Open Rofi with sudo            |
+| `$mod + Escape`    | Lock screen                    |
 | `$mod + Shift+s`   | Open GNOME Settings            |
+| `$mod + Shift+n`   | Re-show last notification      |
+| `$mod + Shift+h`   | Notification history (rofi)    |
 | `$mod + Shift+c`   | Reload i3 configuration        |
 | `$mod + Shift+r`   | Restart i3 (preserve session)  |
 | `$mod + Shift+e`   | Exit i3                        |
@@ -187,6 +191,9 @@ The installer copies this file to `~/.wezterm.lua`.
 | `$mod + Shift + Arrows`   | Move window left/down/up/right         |
 | `$mod + 1-9,0`            | Switch to workspace 1-10               |
 | `$mod + Shift + 1-9,0`    | Move window to workspace 1-10          |
+| `$mod + Tab`              | Back and forth between workspaces      |
+| `$mod + Shift + minus`    | Move window to scratchpad              |
+| `$mod + minus`            | Show/cycle scratchpad windows          |
 
 ### Layout
 
@@ -212,10 +219,12 @@ The installer copies this file to `~/.wezterm.lua`.
 
 ### Media and Hardware
 
+Volume is controlled with `wpctl` (WirePlumber/PipeWire), in 5% steps capped at 100%.
+
 | Shortcut                 | Action                    |
 | ------------------------ | ------------------------- |
-| `XF86AudioRaiseVolume`   | Increase volume (+10%)    |
-| `XF86AudioLowerVolume`   | Decrease volume (-10%)    |
+| `XF86AudioRaiseVolume`   | Increase volume (+5%)     |
+| `XF86AudioLowerVolume`   | Decrease volume (-5%)     |
 | `XF86AudioMute`          | Mute/unmute               |
 | `XF86AudioMicMute`       | Mute/unmute microphone    |
 | `XF86AudioPlay`          | Play/Pause                |
@@ -229,10 +238,12 @@ The installer copies this file to `~/.wezterm.lua`.
 
 ## Monitor Setup
 
-Dual-monitor setup with both at **1920x1080 @ 144Hz**:
+Dual-monitor setup with both at **1920x1080 @ 144Hz**, configured with a single `xrandr` call:
 
 - **DP-0** — Left monitor (primary, with tray)
 - **DP-4** — Right monitor
+
+Workspaces are pinned to monitors: odd workspaces on DP-0, even ones on DP-4 (each falls back to the other output on single-monitor sessions).
 
 > Adjust the output names (`DP-0`, `DP-4`) according to your hardware using `xrandr --query`.
 
@@ -240,7 +251,7 @@ Dual-monitor setup with both at **1920x1080 @ 144Hz**:
 
 ## Status Bar (i3status-rs)
 
-Position: **top** | Theme: **Dracula** | Icons: **Font Awesome**
+Position: **top** | Theme: **Dracula** | Icons: **material-nf** (Nerd Font glyphs, provided by JetBrainsMono Nerd Font)
 
 ### Configured Blocks
 
@@ -250,7 +261,7 @@ Position: **top** | Theme: **Dracula** | Icons: **Font Awesome**
 | `memory`      | RAM usage (alert at 70%, critical at 90%)        |
 | `cpu`         | CPU utilization                                  |
 | `nvidia_gpu`  | NVIDIA GPU usage and temperature                 |
-| `net`         | Network speed (interface `enp7s0`)               |
+| `net`         | Network speed (auto-detected interface)          |
 | `time`        | Date and time (format `Mon 01-01-2026 14:30:00`) |
 | `sound`       | Audio volume                                     |
 | `weather`     | Current weather (via Met.no, auto-location)      |
@@ -265,7 +276,7 @@ Note: I am using Picom v13 compiled locally — this version includes animation 
 | Effect              | Configuration                        |
 | ------------------- | ------------------------------------ |
 | Animations          | Enabled                              |
-| Backend             | xrender                              |
+| Backend             | glx                                  |
 | Shadows             | Enabled (radius: 12px, opacity: 0.45)|
 | Fading              | Enabled (delta: 4ms)                 |
 | Inactive Opacity    | 99%                                  |
@@ -273,15 +284,14 @@ Note: I am using Picom v13 compiled locally — this version includes animation 
 | Rounded Corners     | 12px                                 |
 | Background Blur     | Disabled                             |
 | VSync               | Enabled                              |
-| URxvt Opacity       | 80%                                  |
 
-> Shadow/corner exclusions: Conky, dock, desktop, i3-frame.
+> All per-window behavior (shadow/corner exclusions, window-type opacity) lives in the unified `rules` block — since picom v12, legacy options like `wintypes` and `shadow-exclude` are ignored when `rules` is set.
 
 ---
 
 ## Wallpaper
 
-feh automatically changes the wallpaper every **30 seconds**, randomly selecting from the `~/Pictures/desktop background/` folder.
+The `wallpaper-slideshow.sh` script (in `~/.config/i3/scripts/`) uses feh to change the wallpaper every **30 seconds**, randomly selecting from the `~/Pictures/desktop background/` folder. It guards against duplicate instances and can be customized via the `WALLPAPER_DIR` and `WALLPAPER_INTERVAL` environment variables.
 
 Place your wallpapers in this directory to activate the slideshow.
 
@@ -311,10 +321,12 @@ Applied consistently in: i3wm (borders, bar, i3lock), Rofi, and i3status-rs.
 
 > **Important:** The lock screen uses [i3lock-color](https://github.com/Raymo111/i3lock-color), which is a fork of i3lock with support for visual customization. The default `i3lock` **does not** support the color, blur, clock, and indicator options used in this configuration.
 
+The i3lock-color invocation lives in a single script (`~/.config/i3/scripts/lock-screen.sh`) shared by xss-lock (suspend / `loginctl lock-session`) and the `$mod+Escape` binding.
+
 Configured features:
 
 - Dracula theme with customized indicator colors
-- Background blur (level 5)
+- Background blur (level 25)
 - Clock with date and time
 - Circular indicator (radius: 120px)
 - JetBrainsMono Nerd Font
