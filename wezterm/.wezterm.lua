@@ -21,19 +21,15 @@ config.window_padding = {
   bottom = 0,
 }
 
--- Divider border style
-config.colors = {
-  -- Change this color to match the gray tone of your current border
-  split = "#3d3846", 
-}
-
 -- VISUAL CONFIGURATION
-config.color_scheme = 'Gruvbox Dark (Gnome Terminal)' -- Base para bater com seu cursor #ebdbb2
+config.color_scheme = 'Gruvbox Dark (Gogh)' -- Base para bater com seu cursor #ebdbb2
 config.colors = {
     background = "#241f31",
     foreground = "#9a9996",
     cursor_bg = "#ebdbb2",
     cursor_fg = "#171421",
+    -- Thin divider line between panes
+    split = "#3d3846",
 }
 
 -- Font (Sans Bold 10)
@@ -44,12 +40,7 @@ config.font = wezterm.font_with_fallback({
 })
 config.font_size = 10.0
 
--- Background Image and Transparency
-config.window_background_image_hsb = {
-    brightness = 0.1, -- Darkens the image so it does not interfere with text readability
-    saturation = 1.0,
-    hue = 1.0,
-}
+-- Transparency
 config.window_background_opacity = 0.9
 config.text_background_opacity = 0.3 -- Keeps the text readable over the image
 
