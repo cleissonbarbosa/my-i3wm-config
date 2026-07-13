@@ -1,4 +1,4 @@
-/* Dracula theme shared by all rofi launchers of this setup. */
+/* Dracula rofi theme (managed by themes/theme-switcher.sh) */
 
 * {
   background-color: #282A36;

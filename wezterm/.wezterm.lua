@@ -22,15 +22,26 @@ config.window_padding = {
 }
 
 -- VISUAL CONFIGURATION
-config.color_scheme = 'Gruvbox Dark (Gogh)' -- Base para bater com seu cursor #ebdbb2
-config.colors = {
-    background = "#241f31",
-    foreground = "#9a9996",
-    cursor_bg = "#ebdbb2",
-    cursor_fg = "#171421",
-    -- Thin divider line between panes
-    split = "#3d3846",
-}
+-- The color scheme comes from the active rice theme (themes/theme-switcher.sh);
+-- wezterm reloads automatically when the theme changes.
+local theme_file = wezterm.home_dir .. '/.config/rice-theme/wezterm-theme.lua'
+wezterm.add_to_config_reload_watch_list(theme_file)
+wezterm.add_to_config_reload_watch_list(wezterm.home_dir .. '/.config/rice-theme/current')
+local ok, theme = pcall(dofile, theme_file)
+if ok and type(theme) == 'table' then
+    config.color_scheme = theme.color_scheme
+    config.colors = theme.colors
+else
+    -- Fallback when no theme has been applied yet
+    config.color_scheme = 'Gruvbox Dark (Gogh)'
+    config.colors = {
+        background = "#241f31",
+        foreground = "#9a9996",
+        cursor_bg = "#ebdbb2",
+        cursor_fg = "#171421",
+        split = "#3d3846",
+    }
+end
 
 -- Font (Sans Bold 10)
 config.font = wezterm.font_with_fallback({

@@ -1,0 +1,51 @@
+/* Catppuccin Mocha rofi theme (managed by themes/theme-switcher.sh) */
+
+* {
+  background-color: #1E1E2E;
+  text-color: #CDD6F4;
+  font: "JetBrainsMono Nerd Font 10";
+}
+
+window {
+  background-color: #1E1E2E;
+  border: 1px;
+  border-radius: 12px;
+  border-color: #CBA6F7;
+  width: 30%;
+  padding: 10px;
+}
+
+listview {
+  lines: 12;
+  scrollbar: false;
+}
+
+element {
+  padding: 5px;
+}
+
+element selected {
+  background-color: #CBA6F7;
+  text-color: #1E1E2E;
+}
+
+element-text {
+  background-color: inherit;
+  text-color: inherit;
+  vertical-align: 0.5;
+}
+
+inputbar {
+  children: [prompt, entry];
+  padding: 5px;
+}
+
+prompt {
+  text-color: #CDD6F4;
+}
+
+entry {
+  placeholder: "Escreva aqui";
+  cursor: pointer;
+  text-color: #CDD6F4;
+}

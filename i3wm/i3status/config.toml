@@ -1,5 +1,5 @@
 [theme]
-theme = "dracula"
+theme = "ctp-mocha"
 
 [icons]
 icons = "material-nf" # Nerd Font glyphs (provided by JetBrainsMono Nerd Font, already required by this setup)

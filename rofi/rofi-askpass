@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 # Password prompt for SUDO_ASKPASS (used by rofi_sudo_launcher.sh).
 rofi -dmenu -password -p "Sudo Password: " \
-  -theme "$HOME/.config/rofi/dracula.rasi" \
+  -theme "$HOME/.config/rofi/current-theme.rasi" \
   -theme-str 'window { width: 20%; height: 5%; } entry { placeholder: "Senha aqui"; }'

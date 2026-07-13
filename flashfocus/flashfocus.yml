@@ -1,0 +1,14 @@
+# flashfocus: brief opacity flash on the window that receives focus.
+# https://github.com/fennerm/flashfocus
+
+flash_opacity: 0.85
+default_opacity: 1.0
+time: 150
+ntimepoints: 10
+simple: false
+flash_on_focus: true
+
+rules:
+  # The dropdown terminal toggles focus constantly; flashing it is distracting
+  - window_class: 'dropdown-terminal'
+    flash_on_focus: false

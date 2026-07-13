@@ -4,19 +4,20 @@
 
 set $mod Mod4
 
-# Dracula color palette
-set $backgroundColor #282a36
-set $selection #44475a
-set $comment #6272a4
-set $foreground #f8f8f2
+# >>> theme colors (managed by themes/theme-switcher.sh — do not edit) >>>
+set $backgroundColor #1e1e2e
+set $selection #313244
+set $comment #6c7086
+set $foreground #cdd6f4
 
-set $yellow #f1fa8c
-set $orange #ffb86c
-set $red #ff5555
-set $magenta #ff79c6
-set $blue #6272a4
-set $cyan #8be9fd
-set $green #50fa7b
+set $yellow #f9e2af
+set $orange #fab387
+set $red #f38ba8
+set $magenta #cba6f7
+set $blue #89b4fa
+set $cyan #89dceb
+set $green #a6e3a1
+# <<< theme colors <<<
 
 
 # Font for window titles. Will also be used by the bar unless a different font
@@ -42,12 +43,12 @@ bindsym $mod+Escape exec --no-startup-id loginctl lock-session
 # and nm-applet is a desktop environment-independent system tray GUI for it.
 exec --no-startup-id nm-applet
 
-# Volume control (PipeWire/WirePlumber): 5% steps, capped at 100%.
-# The i3status-rs sound block listens to audio server events, no refresh needed.
-bindsym XF86AudioRaiseVolume exec --no-startup-id wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+
-bindsym XF86AudioLowerVolume exec --no-startup-id wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
-bindsym XF86AudioMute exec --no-startup-id wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
-bindsym XF86AudioMicMute exec --no-startup-id wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+# Volume control (PipeWire/WirePlumber): 5% steps, capped at 100%,
+# with a dunst OSD progress bar.
+bindsym XF86AudioRaiseVolume exec --no-startup-id ~/.config/i3/scripts/volume-osd.sh up
+bindsym XF86AudioLowerVolume exec --no-startup-id ~/.config/i3/scripts/volume-osd.sh down
+bindsym XF86AudioMute exec --no-startup-id ~/.config/i3/scripts/volume-osd.sh mute
+bindsym XF86AudioMicMute exec --no-startup-id ~/.config/i3/scripts/volume-osd.sh mic-mute
 
 # Media control
 bindsym XF86AudioPlay exec playerctl play-pause
@@ -55,9 +56,9 @@ bindsym XF86AudioNext exec playerctl next
 bindsym XF86AudioPrev exec playerctl previous
 bindsym XF86AudioStop exec playerctl stop
 
-# Brightness control
-bindsym XF86MonBrightnessUp exec light -A 5
-bindsym XF86MonBrightnessDown exec light -U 5
+# Brightness control (with dunst OSD)
+bindsym XF86MonBrightnessUp exec --no-startup-id ~/.config/i3/scripts/brightness-osd.sh up
+bindsym XF86MonBrightnessDown exec --no-startup-id ~/.config/i3/scripts/brightness-osd.sh down
 
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
@@ -122,6 +123,10 @@ bindsym $mod+a focus parent
 # scratchpad: hide the focused window / cycle through hidden windows
 bindsym $mod+Shift+minus move scratchpad
 bindsym $mod+minus scratchpad show
+
+# Quake-style dropdown terminal (dedicated WezTerm on the scratchpad)
+bindsym $mod+t exec --no-startup-id ~/.config/i3/scripts/dropdown-terminal.sh
+for_window [class="dropdown-terminal"] floating enable, resize set 70 ppt 65 ppt, move scratchpad, scratchpad show
 
 # ignore Libadwaita
 exec --no-startup-id systemctl --user set-environment ADW_DISABLE_PORTAL=1
@@ -241,6 +246,20 @@ mode "resize" {
 
 bindsym $mod+r mode "resize"
 
+# adjust gaps on the fly
+set $mode_gaps Gaps: (i)nner+ (Shift+i)nner- (o)uter+ (Shift+o)uter- (0) reset
+mode "$mode_gaps" {
+        bindsym i gaps inner current plus 5
+        bindsym Shift+i gaps inner current minus 5
+        bindsym o gaps outer current plus 5
+        bindsym Shift+o gaps outer current minus 5
+        bindsym 0 gaps inner current set 10; gaps outer current set 5
+
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+bindsym $mod+Shift+g mode "$mode_gaps"
+
 
 # Disable title bars and borders (required for gaps to work correctly)
 default_border pixel 0
@@ -299,11 +318,40 @@ client.background       $foreground
 bindsym $mod+d exec --no-startup-id ~/.local/bin/rofi_launcher.sh
 bindsym $mod+Shift+d exec --no-startup-id ~/.local/bin/rofi_sudo_launcher.sh
 
+# Rofi power menu
+bindsym $mod+p exec --no-startup-id ~/.local/bin/rofi_powermenu.sh
+
+# Clipboard history (greenclip + rofi)
+bindsym $mod+Shift+v exec --no-startup-id ~/.local/bin/rofi_clipboard.sh
+
+# Calculator and emoji picker
+bindsym $mod+equal exec --no-startup-id ~/.local/bin/rofi_calc.sh
+bindsym $mod+period exec --no-startup-id sh -c 'command -v rofimoji >/dev/null && rofimoji --action copy'
+
+# Rice/theme selector (Dracula, Gruvbox, Catppuccin, ...)
+bindsym $mod+Shift+t exec --no-startup-id ~/.local/bin/theme-switcher.sh
+
+# eww control-center dashboard
+bindsym $mod+o exec --no-startup-id sh -c 'command -v eww >/dev/null && eww open --toggle dashboard'
+
+# Save/restore workspace layout + programs (i3-resurrect)
+bindsym $mod+F9 exec --no-startup-id sh -c 'command -v i3-resurrect >/dev/null && i3-resurrect save && notify-send -a i3-resurrect "󰆓 Workspace salvo"'
+bindsym $mod+F10 exec --no-startup-id sh -c 'command -v i3-resurrect >/dev/null && i3-resurrect restore'
+
 # background images slideshow (guarded against duplicate instances)
 exec --no-startup-id ~/.config/i3/scripts/wallpaper-slideshow.sh
 
 # enable num lock
 exec --no-startup-id numlockx on
+
+# clipboard history daemon
+exec --no-startup-id sh -c 'command -v greenclip >/dev/null && greenclip daemon'
+
+# flash the window that receives focus (needs the compositor)
+exec --no-startup-id sh -c 'command -v flashfocus >/dev/null && flashfocus'
+
+# eww daemon (widgets)
+exec --no-startup-id sh -c 'command -v eww >/dev/null && eww daemon'
 
 # Compositor: kill any previous instance so an i3 restart picks up config changes
 # (the pause lets the old instance release the compositor selection / GLX context)

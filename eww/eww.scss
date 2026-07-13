@@ -1,0 +1,93 @@
+// Dashboard styles. The palette (_colors.scss) is managed by theme-switcher.sh.
+@import "_colors";
+
+* {
+  all: unset;
+  font-family: "JetBrainsMono Nerd Font";
+}
+
+.dashboard {
+  background-color: $bg;
+  color: $fg;
+  border: 2px solid $accent;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.time {
+  font-size: 34px;
+  font-weight: bold;
+}
+
+.date {
+  font-size: 13px;
+  color: $accent;
+}
+
+.card {
+  background-color: $bg-alt;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.music-title {
+  font-size: 13px;
+}
+
+.music-btn {
+  font-size: 20px;
+  padding: 0 6px;
+}
+
+.music-btn.play {
+  font-size: 26px;
+  color: $accent;
+}
+
+.slider-icon,
+.stat-icon {
+  font-size: 16px;
+  min-width: 24px;
+}
+
+.slider trough {
+  background-color: $bg;
+  border-radius: 6px;
+  min-height: 10px;
+}
+
+.slider trough highlight {
+  background-color: $accent;
+  border-radius: 6px;
+}
+
+.stat-bar trough {
+  background-color: $bg;
+  border-radius: 6px;
+  min-height: 8px;
+}
+
+.stat-bar trough progress {
+  background-color: $green;
+  border-radius: 6px;
+}
+
+.stat-val {
+  font-size: 12px;
+  min-width: 36px;
+}
+
+.power .pw {
+  font-size: 20px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background-color: $bg-alt;
+}
+
+.power .pw.danger {
+  color: $red;
+}
+
+.power .pw:hover {
+  background-color: $accent;
+}

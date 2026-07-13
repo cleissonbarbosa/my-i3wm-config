@@ -210,6 +210,56 @@ install_apt_packages() {
   sudo apt install -y "${packages[@]}"
 }
 
+# Clipboard history daemon (static binary, no sudo needed).
+install_greenclip() {
+  if command -v greenclip >/dev/null 2>&1; then
+    log "greenclip is already installed."
+    return 0
+  fi
+  if ! command -v curl >/dev/null 2>&1; then
+    log "curl not found. Install greenclip manually: https://github.com/erebe/greenclip/releases"
+    return 1
+  fi
+  log "Downloading greenclip..."
+  ensure_dir "$LOCAL_BIN_DIR"
+  if curl -fsSL -o "$LOCAL_BIN_DIR/greenclip" \
+    "https://github.com/erebe/greenclip/releases/download/v4.2/greenclip"; then
+    chmod +x "$LOCAL_BIN_DIR/greenclip"
+    log "greenclip installed in $LOCAL_BIN_DIR."
+  else
+    log "greenclip download failed: https://github.com/erebe/greenclip/releases"
+    rm -f "$LOCAL_BIN_DIR/greenclip"
+  fi
+}
+
+# Python-based rice tools (flash on focus, workspace save/restore, emoji picker).
+# An isolated venv avoids PEP 668 conflicts on modern Debian/Ubuntu releases.
+install_pip_tools() {
+  if ! command -v python3 >/dev/null 2>&1; then
+    log "python3 not found. Install flashfocus, i3-resurrect and rofimoji manually."
+    return 1
+  fi
+
+  local venv_dir="$HOME/.local/share/my-i3wm-config/venv"
+  log "Installing flashfocus, i3-resurrect and rofimoji in $venv_dir..."
+  ensure_dir "$(dirname "$venv_dir")"
+  python3 -m venv "$venv_dir" || {
+    log "Could not create the venv; install python3-venv and try again."
+    return 1
+  }
+  "$venv_dir/bin/python" -m pip install --quiet flashfocus i3-resurrect rofimoji || {
+    log "pip install failed inside $venv_dir."
+    return 1
+  }
+
+  ensure_dir "$LOCAL_BIN_DIR"
+  local command_name
+  for command_name in flashfocus i3-resurrect rofimoji; do
+    ln -sfn "$venv_dir/bin/$command_name" "$LOCAL_BIN_DIR/$command_name"
+  done
+  log "Python rice tools installed and linked in $LOCAL_BIN_DIR."
+}
+
 # Download JetBrainsMono Nerd Font to ~/.local/share/fonts (no sudo needed).
 # It provides the bar icons (material-nf) and all fonts used by this setup.
 install_nerd_font() {
@@ -382,8 +432,8 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
       BUILD_PICOM=true
     fi
 
-    if prompt_yes_no "Install dunst (and jq, used by the notification history script)" "y"; then
-      install_apt_packages dunst jq
+    if prompt_yes_no "Install dunst, jq, xclip and ImageMagick" "y"; then
+      install_apt_packages dunst jq xclip imagemagick
     fi
 
     if prompt_yes_no "Install rofi" "y"; then
@@ -410,6 +460,15 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
       install_nerd_font
     fi
 
+    if prompt_yes_no "Install greenclip (clipboard history)" "y"; then
+      install_greenclip
+    fi
+
+    if prompt_yes_no "Install flashfocus, i3-resurrect and rofimoji via pip" "y"; then
+      install_apt_packages python3-venv
+      install_pip_tools
+    fi
+
     if prompt_yes_no "Install Flameshot via flatpak" "n"; then
       if command -v flatpak >/dev/null 2>&1; then
         flatpak install -y flathub org.flameshot.Flameshot
@@ -421,13 +480,16 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
     install_apt_packages \
       git python3-i3ipc i3 xss-lock dex numlockx feh \
       picom \
-      dunst jq \
+      dunst jq xclip imagemagick \
       rofi \
       wireplumber playerctl \
       light \
+      python3-venv \
       network-manager-gnome
 
     install_nerd_font
+    install_greenclip
+    install_pip_tools
 
     if [[ "$WITH_GNOME_SETTINGS" == "true" ]]; then
       install_apt_packages gnome-control-center
@@ -447,6 +509,7 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
   log "- i3lock-color must be installed manually (fork of i3lock)."
   log "- i3status-rs must be installed manually."
   log "- Brave/Chrome must be installed manually."
+  log "- eww (widgets) must be built manually: sudo apt install libgtk-3-dev libgtk-layer-shell-dev libdbusmenu-gtk3-dev"
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
@@ -463,12 +526,16 @@ if [[ "$APPLY_I3" == "true" ]]; then
   if ensure_i3_alternating_layout_submodule; then
     install_dir "$SCRIPT_DIR/i3wm/scripts" "$CONFIG_DIR/i3/scripts"
     chmod +x "$CONFIG_DIR/i3/scripts/i3-alternating-layout/alternating_layouts.py" \
-             "$CONFIG_DIR/i3/scripts/lock-screen.sh" \
-             "$CONFIG_DIR/i3/scripts/wallpaper-slideshow.sh"
+             "$CONFIG_DIR/i3/scripts/"*.sh
     log "i3 scripts updated, including the i3-alternating-layout submodule."
   else
     log "Warning: the i3 config was applied, but the i3-alternating-layout submodule was not available to copy."
   fi
+
+  # flashfocus and eww configs (harmless when the tools are not installed)
+  install_file "$SCRIPT_DIR/flashfocus/flashfocus.yml" "$CONFIG_DIR/flashfocus/flashfocus.yml"
+  install_dir "$SCRIPT_DIR/eww" "$CONFIG_DIR/eww"
+  chmod +x "$SCRIPT_DIR/eww/scripts/volume.sh"
 fi
 
 if [[ "$INTERACTIVE" == "true" ]]; then
@@ -511,7 +578,8 @@ if [[ "$INTERACTIVE" == "true" ]]; then
 fi
 
 if [[ "$APPLY_DUNST" == "true" ]]; then
-  install_file "$SCRIPT_DIR/dunst/dunstrc" "$CONFIG_DIR/dunst/dunstrc"
+  # ~/.config/dunst/dunstrc itself is generated by themes/theme-switcher.sh
+  # (dunstrc.base + theme colors), which runs at the end of this installer.
   install_file "$SCRIPT_DIR/dunst/dunst-history.sh" "$LOCAL_BIN_DIR/dunst-history.sh"
   chmod +x "$LOCAL_BIN_DIR/dunst-history.sh"
 fi
@@ -537,12 +605,20 @@ if [[ "$INTERACTIVE" == "true" ]]; then
 fi
 
 if [[ "$INSTALL_ROFI" == "true" ]]; then
-  install_file "$SCRIPT_DIR/rofi/dracula.rasi" "$CONFIG_DIR/rofi/dracula.rasi"
+  # The rofi color theme (~/.config/rofi/current-theme.rasi) is managed by
+  # themes/theme-switcher.sh, which runs at the end of this installer.
   install_file "$SCRIPT_DIR/rofi/rofi_launcher.sh" "$LOCAL_BIN_DIR/rofi_launcher.sh"
   install_file "$SCRIPT_DIR/rofi/rofi_sudo_launcher.sh" "$LOCAL_BIN_DIR/rofi_sudo_launcher.sh"
   install_file "$SCRIPT_DIR/rofi/rofi-askpass" "$LOCAL_BIN_DIR/rofi-askpass"
+  install_file "$SCRIPT_DIR/rofi/rofi_powermenu.sh" "$LOCAL_BIN_DIR/rofi_powermenu.sh"
+  install_file "$SCRIPT_DIR/rofi/rofi_calc.sh" "$LOCAL_BIN_DIR/rofi_calc.sh"
+  install_file "$SCRIPT_DIR/rofi/rofi_clipboard.sh" "$LOCAL_BIN_DIR/rofi_clipboard.sh"
+  install_file "$SCRIPT_DIR/themes/theme-switcher.sh" "$LOCAL_BIN_DIR/theme-switcher.sh"
 
-  chmod +x "$LOCAL_BIN_DIR/rofi_launcher.sh" "$LOCAL_BIN_DIR/rofi_sudo_launcher.sh" "$LOCAL_BIN_DIR/rofi-askpass"
+  chmod +x "$LOCAL_BIN_DIR/rofi_launcher.sh" "$LOCAL_BIN_DIR/rofi_sudo_launcher.sh" \
+           "$LOCAL_BIN_DIR/rofi-askpass" "$LOCAL_BIN_DIR/rofi_powermenu.sh" \
+           "$LOCAL_BIN_DIR/rofi_calc.sh" "$LOCAL_BIN_DIR/rofi_clipboard.sh" \
+           "$LOCAL_BIN_DIR/theme-switcher.sh"
   log "Execution permissions applied to the rofi scripts."
 
   # Older versions of this installer put the launchers directly in $HOME.
@@ -575,5 +651,11 @@ if [[ "$COPY_WALLPAPERS" == "true" ]]; then
     log "desktop-wallpapers directory not found."
   fi
 fi
+
+# Apply the rice theme (colors for i3, rofi, dunst, wezterm, i3status, lock screen)
+CURRENT_THEME=$(cat "$HOME/.config/rice-theme/current" 2>/dev/null || echo "dracula")
+log "Applying rice theme: $CURRENT_THEME"
+"$SCRIPT_DIR/themes/theme-switcher.sh" "$CURRENT_THEME" --no-reload || \
+  log "Warning: theme could not be applied; run themes/theme-switcher.sh manually."
 
 log "Installation complete. Reload i3 with Mod+Shift+r."

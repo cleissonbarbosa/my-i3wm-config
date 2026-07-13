@@ -1,0 +1,51 @@
+/* Gruvbox Dark rofi theme (managed by themes/theme-switcher.sh) */
+
+* {
+  background-color: #282828;
+  text-color: #EBDBB2;
+  font: "JetBrainsMono Nerd Font 10";
+}
+
+window {
+  background-color: #282828;
+  border: 1px;
+  border-radius: 12px;
+  border-color: #928374;
+  width: 30%;
+  padding: 10px;
+}
+
+listview {
+  lines: 12;
+  scrollbar: false;
+}
+
+element {
+  padding: 5px;
+}
+
+element selected {
+  background-color: #458588;
+  text-color: #EBDBB2;
+}
+
+element-text {
+  background-color: inherit;
+  text-color: inherit;
+  vertical-align: 0.5;
+}
+
+inputbar {
+  children: [prompt, entry];
+  padding: 5px;
+}
+
+prompt {
+  text-color: #EBDBB2;
+}
+
+entry {
+  placeholder: "Escreva aqui";
+  cursor: pointer;
+  text-color: #EBDBB2;
+}

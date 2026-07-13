@@ -10,7 +10,7 @@ fi
 
 notifications=$(dunstctl history | jq -r '.data[0] | reverse | .[] | "\(.id.data): \(.summary.data)"')
 
-chosen=$(echo "$notifications" | rofi -dmenu -i -p "Notifications" -theme "$HOME/.config/rofi/dracula.rasi")
+chosen=$(echo "$notifications" | rofi -dmenu -i -p "Notifications" -theme "$HOME/.config/rofi/current-theme.rasi")
 
 if [[ -n "$chosen" ]]; then
   id=$(echo "$chosen" | cut -d':' -f1)

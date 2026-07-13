@@ -1,0 +1,69 @@
+;; Control-center dashboard, toggled with $mod+o (see i3 config).
+;; Colors come from _colors.scss, managed by themes/theme-switcher.sh.
+
+(defpoll time-str :interval "1s" `date '+%H:%M:%S'`)
+(defpoll date-str :interval "30s" `date '+%A, %d de %B'`)
+(defpoll music-str :interval "2s"
+  `playerctl metadata --format '{{artist}} — {{title}}' 2>/dev/null || echo ''`)
+(defpoll player-status :interval "2s" `playerctl status 2>/dev/null || echo 'Stopped'`)
+(defpoll volume-pct :interval "1s" `~/.config/eww/scripts/volume.sh`)
+(defpoll bright-pct :interval "2s" `light -G | cut -d. -f1`)
+
+(defwidget dashboard []
+  (box :class "dashboard" :orientation "v" :space-evenly false :spacing 14
+    ;; Clock
+    (box :class "clock" :orientation "v" :space-evenly false
+      (label :class "time" :text time-str)
+      (label :class "date" :text date-str))
+
+    ;; Music player
+    (box :class "card music" :orientation "v" :space-evenly false :spacing 6
+      (label :class "music-title" :limit-width 42
+        :text {music-str != "" ? music-str : "Nada tocando"})
+      (box :class "music-controls" :halign "center" :spacing 24 :space-evenly false
+        (button :class "music-btn" :onclick "playerctl previous" "󰒮")
+        (button :class "music-btn play" :onclick "playerctl play-pause"
+          {player-status == "Playing" ? "󰏤" : "󰐊"})
+        (button :class "music-btn" :onclick "playerctl next" "󰒭")))
+
+    ;; Volume / brightness sliders
+    (box :class "card sliders" :orientation "v" :spacing 10 :space-evenly false
+      (box :spacing 10 :space-evenly false
+        (label :class "slider-icon" :text "󰕾")
+        (scale :class "slider" :hexpand true :min 0 :max 101 :value volume-pct
+          :onchange "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ {}%"))
+      (box :spacing 10 :space-evenly false
+        (label :class "slider-icon" :text "󰃟")
+        (scale :class "slider" :hexpand true :min 1 :max 100 :value bright-pct
+          :onchange "light -S {}")))
+
+    ;; System stats
+    (box :class "card stats" :orientation "v" :spacing 8 :space-evenly false
+      (box :spacing 10 :space-evenly false
+        (label :class "stat-icon" :text "")
+        (progress :class "stat-bar" :hexpand true :valign "center"
+          :value {round(EWW_CPU.avg, 0)})
+        (label :class "stat-val" :text "${round(EWW_CPU.avg, 0)}%"))
+      (box :spacing 10 :space-evenly false
+        (label :class "stat-icon" :text "")
+        (progress :class "stat-bar" :hexpand true :valign "center"
+          :value {round(EWW_RAM.used_mem_perc, 0)})
+        (label :class "stat-val" :text "${round(EWW_RAM.used_mem_perc, 0)}%")))
+
+    ;; Power row
+    (box :class "power" :halign "center" :spacing 22 :space-evenly false
+      (button :class "pw" :onclick "eww close dashboard && loginctl lock-session" "󰌾")
+      (button :class "pw" :onclick "eww close dashboard && systemctl suspend" "󰤄")
+      (button :class "pw danger" :onclick "eww close dashboard && systemctl reboot" "󰜉")
+      (button :class "pw danger" :onclick "eww close dashboard && systemctl poweroff" "󰐥"))))
+
+;; wm-ignore: eww positions the window itself; with a windowtype, i3 would
+;; manage it as a floating window and ignore the x/y offsets below.
+(defwindow dashboard
+  :monitor 0
+  :stacking "fg"
+  :wm-ignore true
+  ;; With wm-ignore on X11, positive x pushes PAST the right anchor edge
+  ;; (into the second monitor); negative x insets from it.
+  :geometry (geometry :x "-15px" :y "40px" :width "340px" :height "10px" :anchor "top right")
+  (dashboard))

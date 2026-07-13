@@ -2,7 +2,7 @@
 
 ![i3wm Overview](./assets/img/i3wm-overview.png)
 
-My personal configuration for i3 (i3-gaps). I use the Dracula theme, Picom as a compositor, i3status-rs for the status bar, and Rofi as a launcher. The installer symlinks the configuration files into `~/.config` and `~/.local/bin` by default, so the repository stays the single source of truth (use `--copy` for standalone copies).
+My personal configuration for i3 (i3-gaps), with Picom, i3status-rs, WezTerm and Rofi. A single theme switcher keeps i3, Rofi, Dunst, WezTerm, i3status-rs, Eww and the lock screen synchronized across Dracula, Gruvbox and Catppuccin Mocha. The installer symlinks configuration files into `~/.config` and `~/.local/bin` by default, so the repository stays the single source of truth (use `--copy` for standalone copies).
 
 The alternating split behavior is provided by the upstream project [olemartinorg/i3-alternating-layout](https://github.com/olemartinorg/i3-alternating-layout), which is now included here as a Git submodule in `i3wm/scripts/i3-alternating-layout`.
 
@@ -17,10 +17,13 @@ The alternating split behavior is provided by the upstream project [olemartinorg
 | Status Bar           | [i3status-rs](https://github.com/greshake/i3status-rust)|
 | Compositor           | [Picom](https://github.com/yshui/picom)                 |
 | Launcher             | [Rofi](https://github.com/davatorium/rofi)              |
-| Theme                | [Dracula](https://draculatheme.com/)                    |
+| Themes               | Dracula, Gruvbox Dark and Catppuccin Mocha               |
 | Wallpaper            | [feh](https://feh.finalrewind.org/) (random slideshow)  |
 | Screenshot           | [Flameshot](https://flameshot.org/) (Flatpak)           |
 | Lock Screen          | [i3lock-color](https://github.com/Raymo111/i3lock-color)|
+| Notifications / OSD  | Dunst                                                  |
+| Optional dashboard   | Eww                                                    |
+| Clipboard history    | Greenclip                                              |
 | Network Notifications| nm-applet                                               |
 | Font                 | [JetBrainsMono Nerd Font](https://www.nerdfonts.com/)   |
 
@@ -68,7 +71,7 @@ Non-interactive mode with flags (examples):
 # i3 and utilities
 sudo apt install git python3-i3ipc i3 xss-lock dex numlockx feh
 
-# i3lock-color (required for Dracula-themed lock screen)
+# i3lock-color (required for the themed lock screen)
 # The default i3lock does NOT support the customization options used in this config.
 # Install i3lock-color: https://github.com/Raymo111/i3lock-color#installation
 
@@ -88,11 +91,24 @@ sudo apt install rofi
 # Volume and media control (wpctl comes with WirePlumber/PipeWire)
 sudo apt install wireplumber playerctl
 
-# Notification history script
-sudo apt install jq
+# Notifications, history, calculator clipboard and lock-screen cache
+sudo apt install dunst jq xclip imagemagick
 
 # Brightness control
 sudo apt install light
+
+# Clipboard history (the installer downloads the static binary)
+# https://github.com/erebe/greenclip/releases
+
+# Focus flash, workspace save/restore and emoji picker
+# The installer creates an isolated venv under ~/.local/share/my-i3wm-config.
+sudo apt install python3-venv
+
+# Optional control-center dashboard (Eww)
+# Build/install Eww separately, then the installer applies eww/ to ~/.config/eww.
+# Native build dependencies on Ubuntu/Zorin:
+sudo apt install libgtk-3-dev libgtk-layer-shell-dev libdbusmenu-gtk3-dev
+# https://elkowar.github.io/eww/
 
 # Network
 sudo apt install network-manager-gnome
@@ -124,20 +140,28 @@ cd my-i3wm-config
 git submodule update --init --recursive
 
 # Symlink configuration files (repository stays the source of truth)
-mkdir -p ~/.config/i3 ~/.config/i3status ~/.config/picom ~/.config/dunst ~/.config/rofi ~/.local/bin
+mkdir -p ~/.config/i3 ~/.config/i3status ~/.config/picom ~/.config/dunst \
+  ~/.config/rofi ~/.config/flashfocus ~/.local/bin
 ln -sn "$PWD/i3wm/config" ~/.config/i3/config
 ln -sn "$PWD/i3wm/scripts" ~/.config/i3/scripts
 ln -sn "$PWD/i3wm/i3status/config.toml" ~/.config/i3status/config.toml
 ln -sn "$PWD/picom/picom.conf" ~/.config/picom/picom.conf
-ln -sn "$PWD/dunst/dunstrc" ~/.config/dunst/dunstrc
 ln -sn "$PWD/wezterm/.wezterm.lua" ~/.wezterm.lua
+ln -sn "$PWD/flashfocus/flashfocus.yml" ~/.config/flashfocus/flashfocus.yml
+ln -sn "$PWD/eww" ~/.config/eww
 
-# Rofi theme and scripts (all executables live in ~/.local/bin)
-ln -sn "$PWD/rofi/dracula.rasi" ~/.config/rofi/dracula.rasi
+# Rofi and desktop helper scripts (all executables live in ~/.local/bin)
 ln -sn "$PWD/rofi/rofi_launcher.sh" ~/.local/bin/rofi_launcher.sh
 ln -sn "$PWD/rofi/rofi_sudo_launcher.sh" ~/.local/bin/rofi_sudo_launcher.sh
 ln -sn "$PWD/rofi/rofi-askpass" ~/.local/bin/rofi-askpass
+ln -sn "$PWD/rofi/rofi_powermenu.sh" ~/.local/bin/rofi_powermenu.sh
+ln -sn "$PWD/rofi/rofi_calc.sh" ~/.local/bin/rofi_calc.sh
+ln -sn "$PWD/rofi/rofi_clipboard.sh" ~/.local/bin/rofi_clipboard.sh
 ln -sn "$PWD/dunst/dunst-history.sh" ~/.local/bin/dunst-history.sh
+ln -sn "$PWD/themes/theme-switcher.sh" ~/.local/bin/theme-switcher.sh
+
+# Generate the active Rofi/Dunst/theme files (without restarting the session)
+./themes/theme-switcher.sh dracula --no-reload
 ```
 
 Reload i3 with `$mod+Shift+r`.
@@ -152,12 +176,12 @@ Highlights:
 
 - no title bar or tab bar
 - thin split line and zero padding
-- Gruvbox-based palette adapted to match the desktop colors
+- palette loaded from the active desktop theme and reloaded automatically
 - pane navigation with `Alt + Arrow keys`
 - pane splitting with `Alt+e` and `Alt+o`
 - pane close with `Alt+w`
 
-The installer copies this file to `~/.wezterm.lua`.
+The installer links this file to `~/.wezterm.lua` by default.
 
 ---
 
@@ -173,6 +197,14 @@ The installer copies this file to `~/.wezterm.lua`.
 | `$mod + Shift+q`   | Close focused window           |
 | `$mod + d`         | Open Rofi (launcher)           |
 | `$mod + Shift+d`   | Open Rofi with sudo            |
+| `$mod + p`         | Open power menu                |
+| `$mod + Shift+v`   | Open clipboard history         |
+| `$mod + equal`     | Open calculator                |
+| `$mod + period`    | Open emoji picker              |
+| `$mod + Shift+t`   | Select and apply a color theme |
+| `$mod + o`         | Toggle the Eww dashboard       |
+| `$mod + t`         | Toggle dropdown terminal       |
+| `$mod + F9/F10`    | Save/restore current workspace |
 | `$mod + Escape`    | Lock screen                    |
 | `$mod + Shift+s`   | Open GNOME Settings            |
 | `$mod + Shift+n`   | Re-show last notification      |
@@ -208,6 +240,7 @@ The installer copies this file to `~/.wezterm.lua`.
 | `$mod + Shift+Space`  | Toggle tiling/floating         |
 | `$mod + Space`        | Toggle focus tiling/floating   |
 | `$mod + r`            | Resize mode                    |
+| `$mod + Shift+g`      | Interactive gaps mode         |
 
 ### Applications
 
@@ -219,7 +252,7 @@ The installer copies this file to `~/.wezterm.lua`.
 
 ### Media and Hardware
 
-Volume is controlled with `wpctl` (WirePlumber/PipeWire), in 5% steps capped at 100%.
+Volume is controlled with `wpctl` (WirePlumber/PipeWire), in 5% steps capped at 100%. Volume and brightness changes display a Dunst progress-bar OSD.
 
 | Shortcut                 | Action                    |
 | ------------------------ | ------------------------- |
@@ -297,23 +330,17 @@ Place your wallpapers in this directory to activate the slideshow.
 
 ---
 
-## Color Theme (Dracula)
+## Color themes
 
-Colors are defined as **variables in the i3 config**, making maintenance and consistency easier:
+The bundled themes are `dracula`, `gruvbox` and `catppuccin` (Mocha). Open the selector with `$mod+Shift+t`, or apply one directly:
 
-- `$backgroundColor` = ![#282a36](https://placehold.co/15x15/282a36/282a36) `#282a36`
-- `$foreground` = ![#f8f8f2](https://placehold.co/15x15/f8f8f2/f8f8f2) `#f8f8f2`
-- `$selection` = ![#44475a](https://placehold.co/15x15/44475a/44475a) `#44475a`
-- `$comment` = ![#6272a4](https://placehold.co/15x15/6272a4/6272a4) `#6272a4`
-- `$red` = ![#ff5555](https://placehold.co/15x15/ff5555/ff5555) `#ff5555`
-- `$green` = ![#50fa7b](https://placehold.co/15x15/50fa7b/50fa7b) `#50fa7b`
-- `$yellow` = ![#f1fa8c](https://placehold.co/15x15/f1fa8c/f1fa8c) `#f1fa8c`
-- `$orange` = ![#ffb86c](https://placehold.co/15x15/ffb86c/ffb86c) `#ffb86c`
-- `$magenta` = ![#ff79c6](https://placehold.co/15x15/ff79c6/ff79c6) `#ff79c6`
-- `$cyan` = ![#8be9fd](https://placehold.co/15x15/8be9fd/8be9fd) `#8be9fd`
-- `$blue` = ![#6272a4](https://placehold.co/15x15/6272a4/6272a4) `#6272a4`
+```bash
+theme-switcher.sh catppuccin
+theme-switcher.sh gruvbox
+theme-switcher.sh dracula
+```
 
-Applied consistently in: i3wm (borders, bar, i3lock), Rofi, and i3status-rs.
+The selected theme is recorded in `~/.config/rice-theme/current` and applied consistently to i3, Rofi, Dunst, WezTerm, i3status-rs, Eww and i3lock. Theme definitions live under `themes/<name>/`; adding another directory with the same set of files makes it available to the selector.
 
 ---
 
@@ -325,8 +352,8 @@ The i3lock-color invocation lives in a single script (`~/.config/i3/scripts/lock
 
 Configured features:
 
-- Dracula theme with customized indicator colors
-- Background blur (level 25)
+- colors inherited from the active desktop theme
+- pre-rendered blurred background cache for instant locking, with live blur as fallback
 - Clock with date and time
 - Circular indicator (radius: 120px)
 - JetBrainsMono Nerd Font
