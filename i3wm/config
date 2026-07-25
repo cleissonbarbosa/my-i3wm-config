@@ -5,18 +5,23 @@
 set $mod Mod4
 
 # >>> theme colors (managed by themes/theme-switcher.sh — do not edit) >>>
-set $backgroundColor #1e1e2e
-set $selection #313244
-set $comment #6c7086
-set $foreground #cdd6f4
+set $backgroundColor #2e3440
+set $selection #3b4252
+set $comment #4c566a
+set $foreground #d8dee9
 
-set $yellow #f9e2af
-set $orange #fab387
-set $red #f38ba8
-set $magenta #cba6f7
-set $blue #89b4fa
-set $cyan #89dceb
-set $green #a6e3a1
+set $yellow #ebcb8b
+set $orange #d08770
+set $red #bf616a
+set $magenta #b48ead
+set $blue #81a1c1
+set $cyan #88c0d0
+set $green #a3be8c
+
+# Bar background with alpha (#rrggbbaa) so picom can frost it — see the
+# dock rule in picom.conf. Use $backgroundColor here to get an opaque bar.
+set $barBackground #2e3440cc
+set $accent #88c0d0
 # <<< theme colors <<<
 
 
@@ -27,6 +32,21 @@ font pango:JetBrainsMono Nerd Font 8
 # Start XDG autostart .desktop files using dex. See also
 # https://wiki.archlinux.org/index.php/XDG_Autostart
 exec --no-startup-id dex --autostart --environment i3
+
+# --- X session tweaks -------------------------------------------------------
+# Without this the root window keeps X's legacy "X" bitmap cursor, which shows
+# up on the desktop and while resizing.
+exec_always --no-startup-id xsetroot -cursor_name left_ptr
+
+# Key repeat: 250 ms before repeating, then 40 chars/s (X defaults to a
+# sluggish 660 ms / 25 per second).
+exec_always --no-startup-id xset r rate 250 40
+
+# Idle policy, made explicit instead of relying on X defaults:
+# blank the screen after 10 min (this is what triggers xss-lock below) and
+# power the monitors down after 15.
+exec_always --no-startup-id xset s 600 600
+exec_always --no-startup-id xset dpms 900 900 900
 
 # Lock screen: the i3lock-color invocation lives in a single script shared by
 # xss-lock (suspend/loginctl) and the manual $mod+Escape binding.
@@ -96,6 +116,30 @@ bindsym $mod+Shift+Left move left
 bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
+
+# --- Dual monitor (DP-0 | DP-4) --------------------------------------------
+# Jump the focus between monitors
+bindsym $mod+Ctrl+j focus output left
+bindsym $mod+Ctrl+ccedilla focus output right
+bindsym $mod+Ctrl+Left focus output left
+bindsym $mod+Ctrl+Right focus output right
+
+# Throw the focused window at the other monitor (focus follows it)
+bindsym $mod+Ctrl+Shift+j move container to output left
+bindsym $mod+Ctrl+Shift+ccedilla move container to output right
+bindsym $mod+Ctrl+Shift+Left move container to output left
+bindsym $mod+Ctrl+Shift+Right move container to output right
+
+# Swap the whole workspace to the other monitor
+bindsym $mod+Ctrl+less move workspace to output left
+bindsym $mod+Ctrl+greater move workspace to output right
+
+# Cycle through the workspaces of the focused monitor
+bindsym $mod+Ctrl+Up workspace prev_on_output
+bindsym $mod+Ctrl+Down workspace next_on_output
+
+# Keep a floating window (video call, PiP, docs) on top across workspaces
+bindsym $mod+Shift+y sticky toggle
 
 # split in horizontal orientation
 bindsym $mod+h split h
@@ -261,9 +305,12 @@ mode "$mode_gaps" {
 bindsym $mod+Shift+g mode "$mode_gaps"
 
 
-# Disable title bars and borders (required for gaps to work correctly)
-default_border pixel 0
-default_floating_border pixel 0
+# No title bars, but keep a thin border: with `pixel 0` the only focus cue is
+# the flashfocus flash, which is easy to miss on a dual-monitor setup.
+# smart_borders hides it again whenever a workspace holds a single window.
+default_border pixel 2
+default_floating_border pixel 2
+smart_borders on
 
 
 # Spacing between windows (Inner Gaps)
@@ -273,6 +320,38 @@ gaps inner 10
 gaps outer 5
 
 smart_gaps on
+
+# --- Focus behaviour --------------------------------------------------------
+# Do not wrap around the edge of a screen: at the rightmost window, "focus
+# right" should land on the other monitor instead of jumping back to the left.
+focus_wrapping no
+
+# Dialogs that pop up over a fullscreen window only steal it when they are
+# transient for the fullscreen window itself.
+popup_during_fullscreen smart
+
+# --- Window rules -----------------------------------------------------------
+# Dialogs, pop-ups and settings windows behave better floating than tiled.
+for_window [window_role="pop-up"] floating enable
+for_window [window_role="bubble"] floating enable
+for_window [window_role="task_dialog"] floating enable
+for_window [window_role="Preferences"] floating enable
+for_window [window_type="dialog"] floating enable
+for_window [window_type="menu"] floating enable
+for_window [class="Pavucontrol"] floating enable, resize set 900 600
+for_window [class="Blueman-manager"] floating enable
+for_window [class="Nm-connection-editor"] floating enable
+for_window [class="(?i)gnome-control-center"] floating enable, resize set 1100 720
+for_window [class="(?i)gnome-calculator"] floating enable
+for_window [class="(?i)nm-openvpn-auth-dialog"] floating enable
+for_window [class="(?i)flameshot"] floating enable, border pixel 0
+for_window [class="(?i)zoom"] floating enable
+for_window [class="Steam" title="^Steam - News"] floating enable
+for_window [title="(?i)^(open|save) (file|folder|as)"] floating enable, resize set 1000 640
+
+# Picture-in-picture: float it, keep it visible on every workspace and park it
+# in the top-right corner of the current monitor.
+for_window [title="(?i)picture[- ]in[- ]picture"] floating enable, sticky enable, resize set 560 315, move position 1340 45
 
 
 # Start i3bar to display a workspace bar (plus the system information i3status
@@ -286,23 +365,42 @@ bar {
         height 25
         position top
 
+        # Equal-width workspace buttons instead of ones that jump around as
+        # the label changes.
+        workspace_min_width 26
+
+        # Scrolling over the bar switching workspaces is easy to trigger by
+        # accident while reaching for a window.
+        bindsym button4 nop
+        bindsym button5 nop
+
         colors {
-          background $backgroundColor
+          # $barBackground carries an alpha channel so picom frosts the bar
+          # (see the window_type = 'dock' rule in picom.conf).
+          background $barBackground
           statusline $foreground
           separator  $selection
 
-          focused_workspace  $selection $selection $foreground
+          focused_workspace  $accent $accent $backgroundColor
           active_workspace   $backgroundColor $selection $foreground
-          inactive_workspace $backgroundColor $backgroundColor #BFBFBF
+          inactive_workspace $barBackground $barBackground #BFBFBF
           urgent_workspace   $red $red $foreground
           binding_mode       $red $red $foreground
         }
 }
 
+# Hide/show the bar (fullscreen reading, screen recordings, ...)
+bindsym $mod+Shift+b bar mode toggle
+
 # Monitor layout: single xrandr call avoids races between mode and position,
 # and marks DP-0 as primary (used by tray_output above).
 exec_always --no-startup-id xrandr --output DP-0 --mode 1920x1080 --rate 144.00 --primary --output DP-4 --mode 1920x1080 --rate 144.00 --right-of DP-0
-# exec_always --no-startup-id ~/.config/i3/scripts/i3-alternating-layout/alternating_layouts.py
+
+# Automatic split direction: new windows split the focused container along its
+# longest side, so you stop pressing $mod+h / $mod+v by hand.
+# The wrapper is a no-op when autotiling is already running (its IPC connection
+# survives an in-place i3 restart, but exec_always fires on every reload).
+exec_always --no-startup-id ~/.config/i3/scripts/autotiling.sh
 
 # class                 border  bground text    indicator child_border
 client.focused          $comment $comment $foreground $comment   $comment
@@ -330,6 +428,18 @@ bindsym $mod+period exec --no-startup-id sh -c 'command -v rofimoji >/dev/null &
 
 # Rice/theme selector (Dracula, Gruvbox, Catppuccin, ...)
 bindsym $mod+Shift+t exec --no-startup-id ~/.local/bin/theme-switcher.sh
+
+# Wi-Fi picker (nmcli + rofi)
+bindsym $mod+Shift+i exec --no-startup-id ~/.local/bin/rofi_wifi.sh
+
+# Searchable cheat sheet of every binding in this config
+bindsym $mod+F1 exec --no-startup-id ~/.local/bin/rofi_keybinds.sh
+
+# Skip to the next wallpaper without waiting for the slideshow interval
+bindsym $mod+F5 exec --no-startup-id pkill -USR1 -f wallpaper-slideshow.sh
+
+# Pause/resume notifications (dunst do-not-disturb)
+bindsym $mod+Shift+comma exec --no-startup-id ~/.local/bin/dunst-dnd.sh
 
 # eww control-center dashboard
 bindsym $mod+o exec --no-startup-id sh -c 'command -v eww >/dev/null && eww open --toggle dashboard'
@@ -360,8 +470,13 @@ exec_always --no-startup-id sh -c 'pkill -x picom; sleep 0.5; picom -b --config 
 # Start the Flameshot daemon (important for Flatpak)
 exec --no-startup-id flatpak run org.flameshot.Flameshot
 
-# Screenshot via Flatpak
+# Screenshots via Flatpak
+#   Print        interactive region selector
+#   Shift+Print  whole desktop straight to the clipboard
+#   Ctrl+Print   focused monitor straight to the clipboard
 bindsym Print exec --no-startup-id flatpak run org.flameshot.Flameshot gui
+bindsym Shift+Print exec --no-startup-id flatpak run org.flameshot.Flameshot full -c
+bindsym Ctrl+Print exec --no-startup-id flatpak run org.flameshot.Flameshot screen -c
 
 bindsym $mod+b exec --no-startup-id brave-browser
 bindsym $mod+c exec --no-startup-id google-chrome

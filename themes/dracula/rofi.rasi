@@ -1,51 +1,114 @@
 /* Dracula rofi theme (managed by themes/theme-switcher.sh) */
 
 * {
-  background-color: #282A36;
-  text-color: #F8F8F2;
-  font: "JetBrainsMono Nerd Font 10";
+    /* The window background carries an alpha channel so picom's dual_kawase
+       blur has something to work with (see the Rofi rule in picom.conf). */
+    bg:        #282a36e6;
+    bg-solid:  #282a36;
+    bg-alt:    #44475a;
+    fg:        #f8f8f2;
+    muted:     #6272a4;
+    accent:    #ff79c6;
+    urgent:    #ff5555;
+
+    background-color: transparent;
+    text-color:       @fg;
+    font:             "JetBrainsMono Nerd Font 11";
 }
 
 window {
-  background-color: #282A36;
-  border: 1px;
-  border-radius: 12px;
-  border-color: #6272A4;
-  width: 30%;
-  padding: 10px;
+    background-color: @bg;
+    border:           2px;
+    border-radius:    14px;
+    border-color:     @accent;
+    width:            38%;
+    padding:          14px;
+    children:         [ mainbox ];
 }
 
-listview {
-  lines: 12;
-  scrollbar: false;
-}
-
-element {
-  padding: 5px;
-}
-
-element selected {
-  background-color: #6272A4;
-  text-color: #F8F8F2;
-}
-
-element-text {
-  background-color: inherit;
-  text-color: inherit;
-  vertical-align: 0.5;
+mainbox {
+    spacing:  10px;
+    children: [ inputbar, message, listview ];
 }
 
 inputbar {
-  children: [prompt, entry];
-  padding: 5px;
+    background-color: @bg-alt;
+    border-radius:    10px;
+    padding:          10px 12px;
+    spacing:          10px;
+    children:         [ prompt, entry ];
 }
 
 prompt {
-  text-color: #F8F8F2;
+    text-color:     @accent;
+    vertical-align: 0.5;
 }
 
 entry {
-  placeholder: "Escreva aqui";
-  cursor: pointer;
-  text-color: #F8F8F2;
+    placeholder:       "Escreva aqui";
+    placeholder-color: @muted;
+    cursor:            text;
+    vertical-align:    0.5;
+}
+
+listview {
+    lines:        12;
+    columns:      1;
+    spacing:      4px;
+    scrollbar:    false;
+    fixed-height: false;
+    dynamic:      true;
+}
+
+element {
+    padding:       8px 10px;
+    border-radius: 8px;
+    spacing:       10px;
+    children:      [ element-icon, element-text ];
+}
+
+element normal.normal   { text-color: @fg; }
+element normal.urgent   { text-color: @urgent; }
+element normal.active   { text-color: @accent; }
+element alternate.normal { text-color: @fg; }
+
+element selected.normal,
+element selected.active {
+    background-color: @accent;
+    text-color:       @bg-solid;
+}
+
+element selected.urgent {
+    background-color: @urgent;
+    text-color:       @bg-solid;
+}
+
+element-icon {
+    size:             22px;
+    vertical-align:   0.5;
+    background-color: transparent;
+}
+
+element-text {
+    vertical-align:   0.5;
+    background-color: transparent;
+    text-color:       inherit;
+}
+
+message {
+    background-color: @bg-alt;
+    border-radius:    10px;
+    padding:          8px 12px;
+}
+
+textbox {
+    text-color:     @fg;
+    vertical-align: 0.5;
+}
+
+error-message {
+    background-color: @bg-solid;
+    border-radius:    10px;
+    padding:          12px;
+    text-color:       @urgent;
 }

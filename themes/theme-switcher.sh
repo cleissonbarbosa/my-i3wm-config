@@ -16,6 +16,7 @@ STATE_DIR="$HOME/.config/rice-theme"
 I3_CONFIG="$REPO_DIR/i3wm/config"
 I3STATUS_CONFIG="$REPO_DIR/i3wm/i3status/config.toml"
 DUNST_BASE="$REPO_DIR/dunst/dunstrc.base"
+DUNST_RULES="$REPO_DIR/dunst/dunstrc.rules"
 EWW_COLORS="$REPO_DIR/eww/_colors.scss"
 
 RELOAD=true
@@ -69,28 +70,40 @@ if [[ -d "$REPO_DIR/eww" ]]; then
   cp -f "$THEME_DIR/eww.scss" "$EWW_COLORS"
 fi
 
+# Splice a theme fragment into the region delimited by the managed markers of
+# a config file. Used for both i3 and i3status-rs, which have no include
+# directive of their own.
+splice_managed_block() {
+  local target=$1 fragment=$2 marker=$3 tmp
+  tmp=$(mktemp)
+  awk -v themefile="$fragment" -v marker="$marker" '
+    index($0, "# >>> " marker) == 1 {
+      print
+      while ((getline line < themefile) > 0) print line
+      close(themefile)
+      skip = 1
+      next
+    }
+    index($0, "# <<< " marker) == 1 { skip = 0 }
+    !skip
+  ' "$target" > "$tmp"
+  cat "$tmp" > "$target"
+  rm -f "$tmp"
+}
+
 # i3: splice the theme variables between the managed markers
-tmp=$(mktemp)
-awk -v themefile="$THEME_DIR/i3.conf" '
-  /^# >>> theme colors/ {
-    print
-    while ((getline line < themefile) > 0) print line
-    close(themefile)
-    skip = 1
-    next
-  }
-  /^# <<< theme colors/ { skip = 0 }
-  !skip
-' "$I3_CONFIG" > "$tmp"
-cat "$tmp" > "$I3_CONFIG"
-rm -f "$tmp"
+splice_managed_block "$I3_CONFIG" "$THEME_DIR/i3.conf" "theme colors"
 
-# i3status-rs: swap the bundled theme name
-sed -i "s/^theme = \".*\"/theme = \"$I3STATUS_THEME\"/" "$I3STATUS_CONFIG"
+# i3status-rs: bundled theme name, or a full [theme.overrides] palette for the
+# themes i3status-rs does not ship (Tokyo Night).
+splice_managed_block "$I3STATUS_CONFIG" "$THEME_DIR/i3status.toml" "i3status theme"
 
-# dunst: generated file = base config + theme colors (dunst has no include)
+# dunst: generated file = base config + theme colors + rules (dunst has no
+# include). The rules go last: everything in themes/<name>/dunst.conf before
+# its first [urgency_*] header still belongs to the [global] section, so a
+# rule section in the base file would swallow it.
 rm -f "$HOME/.config/dunst/dunstrc"
-cat "$DUNST_BASE" "$THEME_DIR/dunst.conf" > "$HOME/.config/dunst/dunstrc"
+cat "$DUNST_BASE" "$THEME_DIR/dunst.conf" "$DUNST_RULES" > "$HOME/.config/dunst/dunstrc"
 
 # GTK: only switch when the theme ships a GTK theme that is installed
 if [[ -n "${GTK_THEME:-}" ]] && { [[ -d "$HOME/.themes/$GTK_THEME" ]] || [[ -d "/usr/share/themes/$GTK_THEME" ]]; }; then

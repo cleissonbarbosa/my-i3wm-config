@@ -7,6 +7,6 @@ if ! command -v greenclip >/dev/null 2>&1; then
   exit 1
 fi
 
-rofi -modi "clipboard:greenclip print" -show clipboard -run-command '{cmd}' \
+rofi -modes "clipboard:greenclip print" -show clipboard -run-command '{cmd}' \
   -theme "$HOME/.config/rofi/current-theme.rasi" \
   -display-clipboard "󰅍 : "

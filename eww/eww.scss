@@ -9,7 +9,9 @@
 .dashboard {
   background-color: $bg;
   color: $fg;
-  border: 2px solid $accent;
+  // $muted, not $accent: the accent is a saturated highlight colour and a
+  // 2px frame of it around the whole panel drowns out the widgets it borders.
+  border: 2px solid $muted;
   border-radius: 12px;
   padding: 18px;
 }
@@ -22,6 +24,30 @@
 .date {
   font-size: 13px;
   color: $accent;
+}
+
+.uptime {
+  font-size: 11px;
+  color: $muted;
+  margin-top: 2px;
+}
+
+.quick .qt {
+  font-size: 18px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background-color: $bg;
+  color: $fg;
+}
+
+.quick .qt:hover {
+  background-color: $accent;
+  color: $bg;
+}
+
+.quick .qt.on {
+  background-color: $accent;
+  color: $bg;
 }
 
 .card {
@@ -47,8 +73,16 @@
 .slider-icon,
 .stat-icon {
   font-size: 16px;
+  // Reserve the same gutter on every row so the bars line up even when a
+  // glyph is narrower than the others.
   min-width: 24px;
 }
+
+// Each stat icon carries the colour of its own bar, so a row is readable at a
+// glance without a text label.
+.stat-icon.cpu  { color: $green; }
+.stat-icon.ram  { color: $yellow; }
+.stat-icon.disk { color: $accent; }
 
 .slider trough {
   background-color: $bg;
@@ -72,9 +106,20 @@
   border-radius: 6px;
 }
 
+.stat-bar.ram trough progress {
+  background-color: $yellow;
+}
+
+.stat-bar.disk trough progress {
+  background-color: $accent;
+}
+
+// Right aligned so 4% / 15% / 83% share a decimal column instead of being
+// ragged against the bar.
 .stat-val {
   font-size: 12px;
-  min-width: 36px;
+  min-width: 42px;
+  color: $muted;
 }
 
 .power .pw {

@@ -2,6 +2,8 @@
 return {
   color_scheme = "Dracula (Official)",
   colors = {
-    split = "#6272a4",
+    split = "#ff79c6",
+    cursor_bg = "#ff79c6",
+    cursor_border = "#ff79c6",
   },
 }

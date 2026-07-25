@@ -1,15 +1,15 @@
-/* Gruvbox Dark rofi theme (managed by themes/theme-switcher.sh) */
+/* Tokyo Night rofi theme (managed by themes/theme-switcher.sh) */
 
 * {
     /* The window background carries an alpha channel so picom's dual_kawase
        blur has something to work with (see the Rofi rule in picom.conf). */
-    bg:        #282828e6;
-    bg-solid:  #282828;
-    bg-alt:    #3c3836;
-    fg:        #ebdbb2;
-    muted:     #928374;
-    accent:    #fe8019;
-    urgent:    #fb4934;
+    bg:        #1a1b26e6;
+    bg-solid:  #1a1b26;
+    bg-alt:    #292e42;
+    fg:        #c0caf5;
+    muted:     #565f89;
+    accent:    #7aa2f7;
+    urgent:    #f7768e;
 
     background-color: transparent;
     text-color:       @fg;

@@ -17,13 +17,14 @@ The alternating split behavior is provided by the upstream project [olemartinorg
 | Status Bar           | [i3status-rs](https://github.com/greshake/i3status-rust)|
 | Compositor           | [Picom](https://github.com/yshui/picom)                 |
 | Launcher             | [Rofi](https://github.com/davatorium/rofi)              |
-| Themes               | Dracula, Gruvbox Dark and Catppuccin Mocha               |
+| Themes               | Dracula, Gruvbox, Catppuccin Mocha, Tokyo Night, Nord   |
 | Wallpaper            | [feh](https://feh.finalrewind.org/) (random slideshow)  |
 | Screenshot           | [Flameshot](https://flameshot.org/) (Flatpak)           |
 | Lock Screen          | [i3lock-color](https://github.com/Raymo111/i3lock-color)|
 | Notifications / OSD  | Dunst                                                  |
 | Optional dashboard   | Eww                                                    |
 | Clipboard history    | Greenclip                                              |
+| Auto layout          | [autotiling](https://github.com/nwg-piotr/autotiling)   |
 | Network Notifications| nm-applet                                               |
 | Font                 | [JetBrainsMono Nerd Font](https://www.nerdfonts.com/)   |
 
@@ -157,7 +158,10 @@ ln -sn "$PWD/rofi/rofi-askpass" ~/.local/bin/rofi-askpass
 ln -sn "$PWD/rofi/rofi_powermenu.sh" ~/.local/bin/rofi_powermenu.sh
 ln -sn "$PWD/rofi/rofi_calc.sh" ~/.local/bin/rofi_calc.sh
 ln -sn "$PWD/rofi/rofi_clipboard.sh" ~/.local/bin/rofi_clipboard.sh
+ln -sn "$PWD/rofi/rofi_wifi.sh" ~/.local/bin/rofi_wifi.sh
+ln -sn "$PWD/rofi/rofi_keybinds.sh" ~/.local/bin/rofi_keybinds.sh
 ln -sn "$PWD/dunst/dunst-history.sh" ~/.local/bin/dunst-history.sh
+ln -sn "$PWD/dunst/dunst-dnd.sh" ~/.local/bin/dunst-dnd.sh
 ln -sn "$PWD/themes/theme-switcher.sh" ~/.local/bin/theme-switcher.sh
 
 # Generate the active Rofi/Dunst/theme files (without restarting the session)
@@ -209,6 +213,11 @@ The installer links this file to `~/.wezterm.lua` by default.
 | `$mod + Shift+s`   | Open GNOME Settings            |
 | `$mod + Shift+n`   | Re-show last notification      |
 | `$mod + Shift+h`   | Notification history (rofi)    |
+| `$mod + Shift+,`   | Toggle do-not-disturb (dunst)  |
+| `$mod + Shift+i`   | Wi-Fi picker (nmcli + rofi)    |
+| `$mod + F1`        | Searchable keybinding cheat sheet |
+| `$mod + F5`        | Skip to the next wallpaper     |
+| `$mod + Shift+b`   | Hide/show the bar              |
 | `$mod + Shift+c`   | Reload i3 configuration        |
 | `$mod + Shift+r`   | Restart i3 (preserve session)  |
 | `$mod + Shift+e`   | Exit i3                        |
@@ -227,6 +236,17 @@ The installer links this file to `~/.wezterm.lua` by default.
 | `$mod + Shift + minus`    | Move window to scratchpad              |
 | `$mod + minus`            | Show/cycle scratchpad windows          |
 
+### Dual monitor
+
+| Shortcut                        | Action                                     |
+| ------------------------------- | ------------------------------------------ |
+| `$mod + Ctrl + j/ç`             | Focus the left/right monitor               |
+| `$mod + Ctrl + Left/Right`      | Focus the left/right monitor               |
+| `$mod + Ctrl + Shift + j/ç`     | Move the window to the other monitor       |
+| `$mod + Ctrl + < / >`           | Move the whole workspace to the other monitor |
+| `$mod + Ctrl + Up/Down`         | Previous/next workspace on this monitor    |
+| `$mod + Shift + y`              | Sticky: keep a floating window on every workspace |
+
 ### Layout
 
 | Shortcut              | Action                         |
@@ -242,13 +262,17 @@ The installer links this file to `~/.wezterm.lua` by default.
 | `$mod + r`            | Resize mode                    |
 | `$mod + Shift+g`      | Interactive gaps mode         |
 
+New windows pick their split direction automatically ([autotiling](https://github.com/nwg-piotr/autotiling)), so `$mod+h` / `$mod+v` are only needed to override it.
+
 ### Applications
 
 | Shortcut     | Action                |
 | ------------ | --------------------- |
 | `$mod + b`   | Open Brave Browser    |
 | `$mod + c`   | Open Google Chrome    |
-| `Print`      | Screenshot (Flameshot)|
+| `Print`      | Screenshot: region selector (Flameshot) |
+| `Shift + Print` | Whole desktop to the clipboard |
+| `Ctrl + Print`  | Focused monitor to the clipboard |
 
 ### Media and Hardware
 
@@ -266,6 +290,16 @@ Volume is controlled with `wpctl` (WirePlumber/PipeWire), in 5% steps capped at 
 | `XF86AudioStop`          | Stop playback             |
 | `XF86MonBrightnessUp`    | Increase brightness (+5)  |
 | `XF86MonBrightnessDown`  | Decrease brightness (-5)  |
+
+`brightness-osd.sh` picks a backend automatically, because `light` silently does nothing on a desktop that has no `/sys/class/backlight` controller:
+
+| Backend    | When it is used                              | What it changes                    |
+| ---------- | -------------------------------------------- | ---------------------------------- |
+| `light`    | a real backlight exists (laptop panels)      | the panel backlight                |
+| `ddcutil`  | installed and DDC/CI answers                 | the monitor backlight over the cable |
+| `xrandr`   | fallback, always available                   | software gamma (dims the image)    |
+
+For real hardware brightness on desktop monitors, install `ddcutil`, load `i2c-dev` and add yourself to the `i2c` group; the script picks it up on its own. Force a backend with `BRIGHTNESS_BACKEND=xrandr`.
 
 ---
 
@@ -288,17 +322,23 @@ Position: **top** | Theme: **Dracula** | Icons: **material-nf** (Nerd Font glyph
 
 ### Configured Blocks
 
-| Block         | Information                                      |
-| ------------- | ------------------------------------------------ |
-| `disk_space`  | Available space on `/`                           |
-| `memory`      | RAM usage (alert at 70%, critical at 90%)        |
-| `cpu`         | CPU utilization                                  |
-| `nvidia_gpu`  | NVIDIA GPU usage and temperature                 |
-| `net`         | Network speed (auto-detected interface)          |
-| `time`        | Date and time (format `Mon 01-01-2026 14:30:00`) |
-| `sound`       | Audio volume                                     |
-| `weather`     | Current weather (via Met.no, auto-location)      |
-| `menu`        | Power menu (Suspend / Shutdown / Restart)        |
+Blocks are ordered left to right; most of them respond to clicks.
+
+| Block         | Information                                      | Click                       |
+| ------------- | ------------------------------------------------ | --------------------------- |
+| `packages`    | Pending apt updates                              | Left: run `apt upgrade`     |
+| `disk_space`  | Available space on `/`                           | Left: open the home folder  |
+| `memory`      | RAM usage (alert at 70%, critical at 90%)        | Left: `btop`                |
+| `cpu`         | CPU utilization                                  | Left: `btop`                |
+| `nvidia_gpu`  | NVIDIA GPU usage and temperature                 | Left: `watch nvidia-smi`    |
+| `net`         | Network speed (auto-detected interface)          | Left: Wi-Fi picker / Right: nm-connection-editor |
+| `weather`     | Current weather (via Met.no, auto-location)      | —                           |
+| `sound`       | Audio volume                                     | Right: `pavucontrol`        |
+| `notify`      | Do-not-disturb state and pending count           | Left: toggle DND / Right: history |
+| `time`        | Date and time (format `Mon 01-01-2026 14:30:00`) | Left: toggle the Eww dashboard |
+| `menu`        | Power menu (Lock / Suspend / Shutdown / Restart) | —                           |
+
+The `[theme]` section is spliced in by `theme-switcher.sh` between the `# >>> i3status theme` markers, so it must not be edited by hand.
 
 ---
 
@@ -306,17 +346,26 @@ Position: **top** | Theme: **Dracula** | Icons: **material-nf** (Nerd Font glyph
 
 Note: I am using Picom v13 compiled locally — this version includes animation support that improves transitions and visual effects.
 
-| Effect              | Configuration                        |
-| ------------------- | ------------------------------------ |
-| Animations          | Enabled                              |
-| Backend             | glx                                  |
-| Shadows             | Enabled (radius: 12px, opacity: 0.45)|
-| Fading              | Enabled (delta: 4ms)                 |
-| Inactive Opacity    | 99%                                  |
-| Frame Opacity       | 98%                                  |
-| Rounded Corners     | 12px                                 |
-| Background Blur     | Disabled                             |
-| VSync               | Enabled                              |
+| Effect              | Configuration                                          |
+| ------------------- | ------------------------------------------------------ |
+| Animations          | Enabled (0.22s open, 0.18s close, 0.10s for menus)     |
+| Backend             | glx                                                    |
+| Shadows             | Enabled (radius: 12px, opacity: 0.45), cropped per monitor |
+| Fading              | Enabled (delta: 4ms)                                   |
+| Inactive windows    | Dimmed 6% (a 1% opacity change was invisible and forced a full blend) |
+| Frame Opacity       | 98%                                                    |
+| Rounded Corners     | 12px                                                   |
+| Background Blur     | `dual_kawase` strength 5, enabled per window           |
+| Dithering           | Enabled (removes NVIDIA banding on blur/shadow gradients) |
+| VSync               | Enabled                                                |
+| Fullscreen          | Unredirected after 3s so games bypass the compositor   |
+| Corners             | Squared when a window fills the work area (see below)  |
+
+Blur is off by default and switched on only for the surfaces that are translucent: the i3bar, Rofi, Dunst, Eww and WezTerm. Opaque windows have nothing to blur, so they cost nothing. The translucency itself comes from the theme (`$barBackground` in `themes/<name>/i3.conf`, the `bg` alpha in `rofi.rasi`, `transparency` in `dunstrc.base`) — make those opaque again and the blur simply disappears.
+
+A window that is alone on its workspace gets no gaps (`smart_gaps`) and no border (`smart_borders`), so it sits flush against the screen edges — rounding it there bites a corner out of the picture. Picom squares those corners by matching the geometry of the full work area (`width = 1920` and either `1055px` below the bar or `1080px` with the bar hidden). Only a solo window can be that size: as soon as it shares the workspace the gaps shrink it to 1910px or less, so tiled splits and floating windows keep their 12px radius. Adjust those numbers in `picom/picom.conf` if you change resolution or bar height.
+
+If fullscreen alt-tabbing ever flickers, set `unredir-if-possible = false` back in `picom/picom.conf`.
 
 > All per-window behavior (shadow/corner exclusions, window-type opacity) lives in the unified `rules` block — since picom v12, legacy options like `wintypes` and `shadow-exclude` are ignored when `rules` is set.
 
@@ -326,21 +375,33 @@ Note: I am using Picom v13 compiled locally — this version includes animation 
 
 The `wallpaper-slideshow.sh` script (in `~/.config/i3/scripts/`) uses feh to change the wallpaper every **30 seconds**, randomly selecting from the `~/Pictures/desktop background/` folder. It guards against duplicate instances and can be customized via the `WALLPAPER_DIR` and `WALLPAPER_INTERVAL` environment variables.
 
-Place your wallpapers in this directory to activate the slideshow.
+Place your wallpapers in this directory to activate the slideshow. Press `$mod+F5` (or send `SIGUSR1` to the script) to skip to the next one without waiting for the interval.
 
 ---
 
 ## Color themes
 
-The bundled themes are `dracula`, `gruvbox` and `catppuccin` (Mocha). Open the selector with `$mod+Shift+t`, or apply one directly:
+The bundled themes are `dracula`, `gruvbox`, `catppuccin` (Mocha), `tokyo-night` and `nord`. Open the selector with `$mod+Shift+t`, or apply one directly:
 
 ```bash
 theme-switcher.sh catppuccin
+theme-switcher.sh tokyo-night
+theme-switcher.sh nord
 theme-switcher.sh gruvbox
 theme-switcher.sh dracula
 ```
 
-The selected theme is recorded in `~/.config/rice-theme/current` and applied consistently to i3, Rofi, Dunst, WezTerm, i3status-rs, Eww and i3lock. Theme definitions live under `themes/<name>/`; adding another directory with the same set of files makes it available to the selector.
+The selected theme is recorded in `~/.config/rice-theme/current` and applied consistently to i3, Rofi, Dunst, WezTerm, i3status-rs, Eww and i3lock. Theme definitions live under `themes/<name>/`; adding another directory with the same set of files makes it available to the selector:
+
+| File            | Consumed by                                                     |
+| --------------- | --------------------------------------------------------------- |
+| `colors.sh`     | the lock screen and any script that needs the raw palette        |
+| `i3.conf`       | spliced into `i3wm/config` between the `# >>> theme colors` markers |
+| `i3status.toml` | spliced into the i3status-rs config (bundled theme name, or a full `[theme.overrides]` palette for themes i3status-rs does not ship, like Tokyo Night) |
+| `rofi.rasi`     | symlinked to `~/.config/rofi/current-theme.rasi`                 |
+| `dunst.conf`    | concatenated into `~/.config/dunst/dunstrc`                      |
+| `eww.scss`      | copied to `eww/_colors.scss`                                     |
+| `wezterm.lua`   | symlinked and hot-reloaded by WezTerm                            |
 
 ---
 
@@ -358,6 +419,35 @@ Configured features:
 - Circular indicator (radius: 120px)
 - JetBrainsMono Nerd Font
 - Media and volume key passthrough
+
+---
+
+## Notifications (Dunst)
+
+`~/.config/dunst/dunstrc` is generated by `theme-switcher.sh` from three pieces, in this order:
+
+1. `dunst/dunstrc.base` — layout and behaviour
+2. `themes/<name>/dunst.conf` — colors (its first lines still belong to `[global]`)
+3. `dunst/dunstrc.rules` — per-notification rules
+
+The rules file must come last: a rule section in the base config would swallow the theme's `frame_color` into itself.
+
+| Behaviour              | Setting                                                  |
+| ---------------------- | -------------------------------------------------------- |
+| Position               | top-right of the monitor under the pointer, below the bar |
+| Stack                  | up to 6 cards, separated by an 8px gap                    |
+| Blur                   | 12% transparency so picom can frost them                  |
+| OSD                    | volume/brightness replace themselves and stay out of the history |
+| Fullscreen             | notifications are delayed, except critical ones           |
+| Context menu / URLs    | opened through Rofi with the active theme                 |
+
+Do-not-disturb is on `$mod+Shift+,`, and the `notify` block in the bar shows and toggles the same state.
+
+---
+
+## Keybinding cheat sheet
+
+`$mod+F1` opens a searchable list of every binding, generated from the live `~/.config/i3/config` — it cannot drift from the real config. The comment above a group of bindings is used as its description, `$mod` and the workspace variables are expanded, and pressing Enter runs the selected command through `i3-msg`.
 
 ---
 

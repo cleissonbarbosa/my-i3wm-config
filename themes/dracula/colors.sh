@@ -12,9 +12,8 @@ ORANGE="#ffb86c"
 MAGENTA="#ff79c6"
 BLUE="#6272a4"
 CYAN="#8be9fd"
+ACCENT="#ff79c6"
 
-# Bundled i3status-rs theme name
-I3STATUS_THEME="dracula"
 # GTK theme to activate when installed (in ~/.themes or /usr/share/themes)
 GTK_THEME="Dracula"
 # Optional fixed wallpaper for the lock screen cache (empty = current feh wallpaper)

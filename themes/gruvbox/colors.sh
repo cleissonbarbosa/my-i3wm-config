@@ -12,7 +12,9 @@ ORANGE="#fe8019"
 MAGENTA="#d3869b"
 BLUE="#83a598"
 CYAN="#8ec07c"
+ACCENT="#fe8019"
 
-I3STATUS_THEME="gruvbox-dark"
+# GTK theme to activate when installed (in ~/.themes or /usr/share/themes)
 GTK_THEME=""
+# Optional fixed wallpaper for the lock screen cache (empty = current feh wallpaper)
 LOCK_WALLPAPER=""

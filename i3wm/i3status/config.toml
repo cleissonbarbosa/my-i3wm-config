@@ -1,8 +1,26 @@
+# >>> i3status theme (managed by themes/theme-switcher.sh — do not edit) >>>
 [theme]
-theme = "ctp-mocha"
+theme = "nord-dark"
+# <<< i3status theme <<<
 
 [icons]
 icons = "material-nf" # Nerd Font glyphs (provided by JetBrainsMono Nerd Font, already required by this setup)
+
+# Blocks are laid out left to right in declaration order and pushed against the
+# right edge of the bar: system stats first, clock and tray last.
+
+# Pending apt updates. i3status-rs keeps its own package database under
+# /tmp/i3rs-apt, so this never needs root and never touches the system lists.
+[[block]]
+block = "packages"
+package_manager = ["apt"]
+interval = 3600
+format = " $icon $total "
+warning_updates_regex = "(linux|linux-lts|linux-zen)"
+critical_updates_regex = "(zorin|nvidia)"
+[[block.click]]
+button = "left"
+cmd = "wezterm start -- sh -c 'sudo apt update && sudo apt upgrade; read -r -p \"Enter para fechar\"'"
 
 [[block]]
 block = "disk_space"
@@ -10,6 +28,9 @@ path = "/"
 info_type = "available"
 format = "$icon Disk: $available"
 interval = 20
+[[block.click]]
+button = "left"
+cmd = "xdg-open $HOME"
 
 [[block]]
 block = "memory"
@@ -18,18 +39,27 @@ format_alt = " MEMORY LOW: $mem_free "
 interval = 5
 warning_mem = 70
 critical_mem = 90
+[[block.click]]
+button = "left"
+cmd = "wezterm start -- btop"
 
 [[block]]
 block = "cpu"
 format = "$icon $utilization "
 format_alt = " CPU: $utilization "
 interval = 5
+[[block.click]]
+button = "left"
+cmd = "wezterm start -- btop"
 
 # GPU block requires nvidia-smi to be installed and in PATH
 [[block]]
 block = "nvidia_gpu"
 format = "$icon $utilization/$temperature "
 interval = 5
+[[block.click]]
+button = "left"
+cmd = "wezterm start -- watch -n1 nvidia-smi"
 
 [[block]]
 block = "net"
@@ -38,17 +68,12 @@ block = "net"
 format = "$icon ED: $graph_down($speed_down) "
 format_alt = "$icon EU: $graph_up($speed_up) "
 interval = 5
-
-[[block]]
-block = "time"
-interval = 1
-[block.format]
-full = " $icon $timestamp.datetime(f:'%a %d-%m-%Y %R:%S', l:pt_BR) "
-short = " $icon $timestamp.datetime(f:%R) "
-
-[[block]]
-block = "sound"
-step_width = 3
+[[block.click]]
+button = "left"
+cmd = "~/.local/bin/rofi_wifi.sh"
+[[block.click]]
+button = "right"
+cmd = "nm-connection-editor"
 
 [[block]]
 block = "weather"
@@ -59,8 +84,41 @@ name = "metno"
 #lang = "pt"
 
 [[block]]
+block = "sound"
+step_width = 3
+[[block.click]]
+button = "right"
+cmd = "pavucontrol"
+
+# Do-not-disturb indicator: left click pauses/resumes dunst, right click
+# reopens the notification history.
+[[block]]
+block = "notify"
+driver = "dunst"
+format = " $icon {($notification_count.eng(w:1)) |}"
+[[block.click]]
+button = "left"
+action = "toggle_paused"
+[[block.click]]
+button = "right"
+cmd = "~/.local/bin/dunst-history.sh"
+
+[[block]]
+block = "time"
+interval = 1
+[block.format]
+full = " $icon $timestamp.datetime(f:'%a %d-%m-%Y %R:%S', l:pt_BR) "
+short = " $icon $timestamp.datetime(f:%R) "
+[[block.click]]
+button = "left"
+cmd = "eww open --toggle dashboard"
+
+[[block]]
 block = "menu"
 text = "   "
+[[block.items]]
+display = " -&gt;   Lock    &lt;-"
+cmd = "loginctl lock-session"
 [[block.items]]
 display = " -&gt;   Sleep   &lt;-"
 cmd = "systemctl suspend"

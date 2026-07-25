@@ -12,7 +12,9 @@ ORANGE="#fab387"
 MAGENTA="#cba6f7"
 BLUE="#89b4fa"
 CYAN="#89dceb"
+ACCENT="#cba6f7"
 
-I3STATUS_THEME="ctp-mocha"
+# GTK theme to activate when installed (in ~/.themes or /usr/share/themes)
 GTK_THEME=""
+# Optional fixed wallpaper for the lock screen cache (empty = current feh wallpaper)
 LOCK_WALLPAPER=""

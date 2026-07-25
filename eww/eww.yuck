@@ -3,18 +3,57 @@
 
 (defpoll time-str :interval "1s" `date '+%H:%M:%S'`)
 (defpoll date-str :interval "30s" `date '+%A, %d de %B'`)
+;; Computed from /proc/uptime rather than `uptime -p`, whose output is in
+;; English regardless of the locale ("ligado há 43 minutes").
+(defpoll uptime-str :interval "60s" :initial "0min"
+  `awk '{d=int($1/86400); h=int($1%86400/3600); m=int($1%3600/60);
+         if (d > 0) printf "%dd %dh", d, h;
+         else if (h > 0) printf "%dh %dmin", h, m;
+         else printf "%dmin", m}' /proc/uptime`)
 (defpoll music-str :interval "2s"
   `playerctl metadata --format '{{artist}} — {{title}}' 2>/dev/null || echo ''`)
 (defpoll player-status :interval "2s" `playerctl status 2>/dev/null || echo 'Stopped'`)
-(defpoll volume-pct :interval "1s" `~/.config/eww/scripts/volume.sh`)
-(defpoll bright-pct :interval "2s" `light -G | cut -d. -f1`)
+;; :initial keeps the sliders from being fed an empty string on the very first
+;; frame, which eww rejects as "cannot parse float from empty string".
+(defpoll volume-pct :interval "1s" :initial "0" `~/.config/eww/scripts/volume.sh`)
+(defpoll bright-pct :interval "2s" :initial "100"
+  `~/.config/i3/scripts/brightness-osd.sh get`)
+(defpoll dnd-on :interval "2s" :initial "false" `dunstctl is-paused 2>/dev/null || echo false`)
+(defpoll theme-name :interval "5s" :initial "-"
+  `cat ~/.config/rice-theme/current 2>/dev/null || echo '-'`)
+
+(defwidget stat-row [icon label value color]
+  (box :spacing 10 :space-evenly false :tooltip "${label}: ${round(value, 0)}%"
+    (label :class "stat-icon ${color}" :text icon)
+    (progress :class "stat-bar ${color}" :hexpand true :valign "center" :value value)
+    (label :class "stat-val" :halign "end" :text "${round(value, 0)}%")))
 
 (defwidget dashboard []
   (box :class "dashboard" :orientation "v" :space-evenly false :spacing 14
     ;; Clock
     (box :class "clock" :orientation "v" :space-evenly false
       (label :class "time" :text time-str)
-      (label :class "date" :text date-str))
+      (label :class "date" :text date-str)
+      (label :class "uptime" :text "󰅐 ligado há ${uptime-str}"))
+
+    ;; Quick toggles. The outer card fills the width like every other card
+    ;; (a :halign "center" on the card itself shrank it to its contents and
+    ;; left it visibly narrower than the music/sliders/stats cards); only the
+    ;; inner row of buttons is centred.
+    (box :class "card quick" :space-evenly false
+      (box :halign "center" :hexpand true :spacing 10 :space-evenly false
+        (button :class "qt ${dnd-on == 'true' ? 'on' : ''}"
+          :tooltip "Não perturbe"
+          :onclick "~/.local/bin/dunst-dnd.sh"
+          {dnd-on == "true" ? "󰂛" : "󰂚"})
+        (button :class "qt" :tooltip "Próximo wallpaper"
+          :onclick "pkill -USR1 -f wallpaper-slideshow.sh" "󰸉")
+        (button :class "qt" :tooltip "Tema atual: ${theme-name}"
+          :onclick "eww close dashboard && ~/.local/bin/theme-switcher.sh" "󰏘")
+        (button :class "qt" :tooltip "Atalhos do teclado"
+          :onclick "eww close dashboard && ~/.local/bin/rofi_keybinds.sh" "󰌌")
+        (button :class "qt" :tooltip "Captura de tela"
+          :onclick "eww close dashboard && flatpak run org.flameshot.Flameshot gui" "󰹑")))
 
     ;; Music player
     (box :class "card music" :orientation "v" :space-evenly false :spacing 6
@@ -35,27 +74,27 @@
       (box :spacing 10 :space-evenly false
         (label :class "slider-icon" :text "󰃟")
         (scale :class "slider" :hexpand true :min 1 :max 100 :value bright-pct
-          :onchange "light -S {}")))
+          :onchange "~/.config/i3/scripts/brightness-osd.sh set {}")))
 
     ;; System stats
     (box :class "card stats" :orientation "v" :spacing 8 :space-evenly false
-      (box :spacing 10 :space-evenly false
-        (label :class "stat-icon" :text "")
-        (progress :class "stat-bar" :hexpand true :valign "center"
-          :value {round(EWW_CPU.avg, 0)})
-        (label :class "stat-val" :text "${round(EWW_CPU.avg, 0)}%"))
-      (box :spacing 10 :space-evenly false
-        (label :class "stat-icon" :text "")
-        (progress :class "stat-bar" :hexpand true :valign "center"
-          :value {round(EWW_RAM.used_mem_perc, 0)})
-        (label :class "stat-val" :text "${round(EWW_RAM.used_mem_perc, 0)}%")))
+      (stat-row :icon "󰻠" :label "CPU"   :color "cpu"
+        :value {round(EWW_CPU.avg, 0)})
+      (stat-row :icon "󰍛" :label "RAM"   :color "ram"
+        :value {round(EWW_RAM.used_mem_perc, 0)})
+      (stat-row :icon "󰋊" :label "Disco" :color "disk"
+        :value {round(EWW_DISK["/"].used_perc, 0)}))
 
     ;; Power row
     (box :class "power" :halign "center" :spacing 22 :space-evenly false
-      (button :class "pw" :onclick "eww close dashboard && loginctl lock-session" "󰌾")
-      (button :class "pw" :onclick "eww close dashboard && systemctl suspend" "󰤄")
-      (button :class "pw danger" :onclick "eww close dashboard && systemctl reboot" "󰜉")
-      (button :class "pw danger" :onclick "eww close dashboard && systemctl poweroff" "󰐥"))))
+      (button :class "pw" :tooltip "Bloquear"
+        :onclick "eww close dashboard && loginctl lock-session" "󰌾")
+      (button :class "pw" :tooltip "Suspender"
+        :onclick "eww close dashboard && systemctl suspend" "󰤄")
+      (button :class "pw danger" :tooltip "Reiniciar"
+        :onclick "eww close dashboard && systemctl reboot" "󰜉")
+      (button :class "pw danger" :tooltip "Desligar"
+        :onclick "eww close dashboard && systemctl poweroff" "󰐥"))))
 
 ;; wm-ignore: eww positions the window itself; with a windowtype, i3 would
 ;; manage it as a floating window and ignore the x/y offsets below.

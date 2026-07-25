@@ -1,0 +1,27 @@
+# Per-notification rules. theme-switcher.sh appends this file *after* the
+# theme colors, because everything in themes/<name>/dunst.conf before the
+# first [urgency_*] header still belongs to the [global] section.
+
+# Volume/brightness OSD: replaces itself instead of stacking, and never shows
+# up in the history (see the x-dunst-stack-tag hint in the OSD scripts).
+[osd]
+    stack_tag = "osd"
+    history_ignore = yes
+    timeout = 2
+
+# The theme switcher and the screenshot tool are one-shot confirmations.
+[transient-tools]
+    appname = "theme-switcher"
+    history_ignore = yes
+    timeout = 3
+
+# Never let a fullscreen game or video get covered by a notification;
+# they are queued and shown once you leave fullscreen.
+[fullscreen-delay]
+    summary = "*"
+    fullscreen = delay
+
+# ...except critical ones, which are worth interrupting for.
+[fullscreen-critical]
+    msg_urgency = critical
+    fullscreen = show
