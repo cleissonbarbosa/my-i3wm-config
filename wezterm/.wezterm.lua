@@ -21,7 +21,6 @@ config.window_padding = {
   bottom = 0,
 }
 
--- VISUAL CONFIGURATION
 -- The color scheme comes from the active rice theme (themes/theme-switcher.sh);
 -- wezterm reloads automatically when the theme changes.
 local theme_file = wezterm.home_dir .. '/.config/rice-theme/wezterm-theme.lua'
@@ -43,7 +42,6 @@ else
     }
 end
 
--- Font (Sans Bold 10)
 config.font = wezterm.font_with_fallback({
     "JetBrains Mono",
     "DejaVu Sans Mono",
@@ -51,22 +49,15 @@ config.font = wezterm.font_with_fallback({
 })
 config.font_size = 10.0
 
--- Transparency
 config.window_background_opacity = 0.9
 config.text_background_opacity = 0.3 -- Keeps the text readable over the image
 
--- Interface (No title bar and no scrollbar)
 config.enable_scroll_bar = false
 
--- KEYBOARD SHORTCUTS
 config.keys = {
-    -- Vertical Split (Alt+E)
     { key = 'e', mods = 'ALT', action = wezterm.action.SplitVertical{ domain = 'CurrentPaneDomain' } },
-    -- Horizontal Split (Alt+O)
     { key = 'o', mods = 'ALT', action = wezterm.action.SplitHorizontal{ domain = 'CurrentPaneDomain' } },
-    -- Close Pane (Alt+W)
     { key = 'w', mods = 'ALT', action = wezterm.action.CloseCurrentPane{ confirm = true } },
-    -- Switch between panes (Alt + Arrows)
     { key = 'LeftArrow', mods = 'ALT', action = wezterm.action.ActivatePaneDirection 'Left' },
     { key = 'RightArrow', mods = 'ALT', action = wezterm.action.ActivatePaneDirection 'Right' },
     { key = 'UpArrow', mods = 'ALT', action = wezterm.action.ActivatePaneDirection 'Up' },

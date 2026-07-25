@@ -1,36 +1,31 @@
-# i3 config file (v4)
-#
-# Please see https://i3wm.org/docs/userguide.html for a complete reference!
+# i3 config file (v4) — https://i3wm.org/docs/userguide.html
 
 set $mod Mod4
 
 # >>> theme colors (managed by themes/theme-switcher.sh — do not edit) >>>
-set $backgroundColor #2e3440
-set $selection #3b4252
-set $comment #4c566a
-set $foreground #d8dee9
+set $backgroundColor #1a1b26
+set $selection #292e42
+set $comment #565f89
+set $foreground #c0caf5
 
-set $yellow #ebcb8b
-set $orange #d08770
-set $red #bf616a
-set $magenta #b48ead
-set $blue #81a1c1
-set $cyan #88c0d0
-set $green #a3be8c
+set $yellow #e0af68
+set $orange #ff9e64
+set $red #f7768e
+set $magenta #bb9af7
+set $blue #7aa2f7
+set $cyan #7dcfff
+set $green #9ece6a
 
 # Bar background with alpha (#rrggbbaa) so picom can frost it — see the
 # dock rule in picom.conf. Use $backgroundColor here to get an opaque bar.
-set $barBackground #2e3440cc
-set $accent #88c0d0
+set $barBackground #1a1b26cc
+set $accent #7aa2f7
 # <<< theme colors <<<
 
 
-# Font for window titles. Will also be used by the bar unless a different font
-# is used in the bar {} block below.
 font pango:JetBrainsMono Nerd Font 8
 
-# Start XDG autostart .desktop files using dex. See also
-# https://wiki.archlinux.org/index.php/XDG_Autostart
+# Start XDG autostart .desktop files
 exec --no-startup-id dex --autostart --environment i3
 
 # --- X session tweaks -------------------------------------------------------
@@ -52,15 +47,14 @@ exec_always --no-startup-id xset dpms 900 900 900
 # xss-lock (suspend/loginctl) and the manual $mod+Escape binding.
 set $locker ~/.config/i3/scripts/lock-screen.sh
 
-# xss-lock grabs a logind suspend inhibit lock and will use the locker to lock
-# the screen before suspend. Use loginctl lock-session to lock your screen.
+# xss-lock grabs a logind suspend inhibit lock, so the screen is locked before
+# suspend as well.
 exec --no-startup-id xss-lock --transfer-sleep-lock -- $locker
 
 # Lock the screen manually
 bindsym $mod+Escape exec --no-startup-id loginctl lock-session
 
-# NetworkManager is the most popular way to manage wireless networks on Linux,
-# and nm-applet is a desktop environment-independent system tray GUI for it.
+# NetworkManager tray applet
 exec --no-startup-id nm-applet
 
 # Volume control (PipeWire/WirePlumber): 5% steps, capped at 100%,
@@ -80,11 +74,10 @@ bindsym XF86AudioStop exec playerctl stop
 bindsym XF86MonBrightnessUp exec --no-startup-id ~/.config/i3/scripts/brightness-osd.sh up
 bindsym XF86MonBrightnessDown exec --no-startup-id ~/.config/i3/scripts/brightness-osd.sh down
 
-# Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
 
-# move tiling windows via drag & drop by left-clicking anywhere into the
-# window while holding the floating modifier (title bars are disabled).
+# Drag tiling windows from anywhere in the window, not just the title bar
+# (title bars are disabled here).
 tiling_drag modifier
 
 # start a terminal
@@ -98,8 +91,6 @@ bindsym $mod+j focus left
 bindsym $mod+k focus down
 bindsym $mod+l focus up
 bindsym $mod+ccedilla focus right
-
-# alternatively, you can use the cursor keys:
 bindsym $mod+Left focus left
 bindsym $mod+Down focus down
 bindsym $mod+Up focus up
@@ -110,8 +101,6 @@ bindsym $mod+Shift+j move left
 bindsym $mod+Shift+k move down
 bindsym $mod+Shift+l move up
 bindsym $mod+Shift+ccedilla move right
-
-# alternatively, you can use the cursor keys:
 bindsym $mod+Shift+Left move left
 bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
@@ -178,8 +167,6 @@ exec --no-startup-id systemctl --user set-environment ADW_DISABLE_PORTAL=1
 # Open Gnome Settings
 bindsym $mod+Shift+s exec --no-startup-id XDG_CURRENT_DESKTOP=GNOME gnome-control-center
 
-# Define names for default workspaces for which we configure key bindings later on.
-# We use variables to avoid repeating the names in multiple places.
 set $ws1 "1"
 set $ws2 "2"
 set $ws3 "3"
@@ -265,18 +252,11 @@ bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcu
 
 # resize window (you can also use the mouse for that)
 mode "resize" {
-        # These bindings trigger as soon as you enter the resize mode
-
-        # Pressing left will shrink the window’s width.
-        # Pressing right will grow the window’s width.
-        # Pressing up will shrink the window’s height.
-        # Pressing down will grow the window’s height.
         bindsym j resize shrink width 10 px or 10 ppt
         bindsym k resize grow height 10 px or 10 ppt
         bindsym l resize shrink height 10 px or 10 ppt
         bindsym ccedilla resize grow width 10 px or 10 ppt
 
-        # same bindings, but for the arrow keys
         bindsym Left resize shrink width 10 px or 10 ppt
         bindsym Down resize grow height 10 px or 10 ppt
         bindsym Up resize shrink height 10 px or 10 ppt
@@ -313,10 +293,7 @@ default_floating_border pixel 2
 smart_borders on
 
 
-# Spacing between windows (Inner Gaps)
 gaps inner 10
-
-# Spacing between windows and screen edges (Outer Gaps)
 gaps outer 5
 
 smart_gaps on
@@ -352,6 +329,15 @@ for_window [title="(?i)^(open|save) (file|folder|as)"] floating enable, resize s
 # Picture-in-picture: float it, keep it visible on every workspace and park it
 # in the top-right corner of the current monitor.
 for_window [title="(?i)picture[- ]in[- ]picture"] floating enable, sticky enable, resize set 560 315, move position 1340 45
+
+# Games: let them keep the size they ask for instead of being squeezed into
+# whatever tile happens to be free (Rocket League ended up in a 940x507 slot,
+# which is not a resolution any game expects). Steam, Heroic and Lutris all
+# label the window steam_app_<id>; gamescope wraps its own session.
+# Borderless because a game draws its own frame.
+for_window [class="^steam_app_[0-9]+$"] floating enable, border pixel 0
+for_window [class="(?i)^gamescope$"] floating enable, border pixel 0
+for_window [class="(?i)^(lutris|heroic)$" window_role="pop-up"] floating enable
 
 
 # Start i3bar to display a workspace bar (plus the system information i3status
@@ -451,7 +437,6 @@ bindsym $mod+F10 exec --no-startup-id sh -c 'command -v i3-resurrect >/dev/null 
 # background images slideshow (guarded against duplicate instances)
 exec --no-startup-id ~/.config/i3/scripts/wallpaper-slideshow.sh
 
-# enable num lock
 exec --no-startup-id numlockx on
 
 # clipboard history daemon
