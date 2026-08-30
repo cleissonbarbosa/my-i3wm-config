@@ -15,6 +15,13 @@ CYAN="#8ec07c"
 ACCENT="#fe8019"
 
 # GTK theme to activate when installed (in ~/.themes or /usr/share/themes)
-GTK_THEME=""
+GTK_THEME="ZorinOrange-Dark"
+# Icon theme to activate when installed (~/.icons or /usr/share/icons).
+# Also handed to dunst, so notification icons come from the same set as
+# the ones rofi and the file manager draw.
+ICON_THEME="ZorinOrange-Dark"
+# Cursor theme to activate when installed
+CURSOR_THEME="Adwaita"
+
 # Optional fixed wallpaper for the lock screen cache (empty = current feh wallpaper)
 LOCK_WALLPAPER=""

@@ -2,7 +2,11 @@
 [theme]
 theme = "plain"
 [theme.overrides]
-idle_bg = "#1a1b26"
+# Transparent idle background so the frosted bar shows through: $barBackground
+# (themes/<name>/i3.conf) carries an alpha channel and picom blurs the dock,
+# but an opaque idle_bg would paint over it and leave only the workspace side
+# frosted. Colored states (info/good/warning/critical) keep their pill.
+idle_bg = "#00000000"
 idle_fg = "#c0caf5"
 info_bg = "#7aa2f7"
 info_fg = "#1a1b26"
@@ -11,7 +15,9 @@ good_fg = "#1a1b26"
 warning_bg = "#e0af68"
 warning_fg = "#1a1b26"
 critical_bg = "#f7768e"
-critical_fg = "#c0caf5"
+critical_fg = "#1a1b26"
+alternating_tint_bg = "#00000000"
+alternating_tint_fg = "#00000000"
 separator = "\ue0b2"
 separator_bg = "auto"
 separator_fg = "auto"

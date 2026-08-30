@@ -53,7 +53,7 @@
         (button :class "qt" :tooltip "Atalhos do teclado"
           :onclick "eww close dashboard && ~/.local/bin/rofi_keybinds.sh" "󰌌")
         (button :class "qt" :tooltip "Captura de tela"
-          :onclick "eww close dashboard && flatpak run org.flameshot.Flameshot gui" "󰹑")))
+          :onclick "eww close dashboard && spectacle --region" "󰹑")))
 
     ;; Music player
     (box :class "card music" :orientation "v" :space-evenly false :spacing 6

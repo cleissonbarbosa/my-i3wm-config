@@ -2,7 +2,7 @@
 
 ![i3wm Overview](./assets/img/i3wm-overview.png)
 
-My personal configuration for i3 (i3-gaps), with Picom, i3status-rs, WezTerm and Rofi. A single theme switcher keeps i3, Rofi, Dunst, WezTerm, i3status-rs, Eww and the lock screen synchronized across Dracula, Gruvbox and Catppuccin Mocha. The installer symlinks configuration files into `~/.config` and `~/.local/bin` by default, so the repository stays the single source of truth (use `--copy` for standalone copies).
+My personal configuration for i3 (i3-gaps), with Picom, i3status-rs, WezTerm and Rofi. A single theme switcher keeps i3, Rofi, Dunst, WezTerm, i3status-rs, Eww, GTK and the lock screen synchronized across Dracula, Gruvbox, Catppuccin Mocha, Tokyo Night and Nord. The installer symlinks configuration files into `~/.config` and `~/.local/bin` by default, so the repository stays the single source of truth (use `--copy` for standalone copies).
 
 The alternating split behavior is provided by the upstream project [olemartinorg/i3-alternating-layout](https://github.com/olemartinorg/i3-alternating-layout), which is now included here as a Git submodule in `i3wm/scripts/i3-alternating-layout`.
 
@@ -19,7 +19,8 @@ The alternating split behavior is provided by the upstream project [olemartinorg
 | Launcher             | [Rofi](https://github.com/davatorium/rofi)              |
 | Themes               | Dracula, Gruvbox, Catppuccin Mocha, Tokyo Night, Nord   |
 | Wallpaper            | [feh](https://feh.finalrewind.org/) (random slideshow)  |
-| Screenshot           | [Flameshot](https://flameshot.org/) (Flatpak)           |
+| Screenshot           | [Spectacle](https://apps.kde.org/spectacle/) (`kde-spectacle`) |
+| Screen recording     | ffmpeg / x11grab via `screen-record.sh`                 |
 | Lock Screen          | [i3lock-color](https://github.com/Raymo111/i3lock-color)|
 | Notifications / OSD  | Dunst                                                  |
 | Optional dashboard   | Eww                                                    |
@@ -63,7 +64,7 @@ Non-interactive mode with flags (examples):
 ./install.sh --non-interactive --config-dir "$HOME/.config" --wallpaper-dir "$HOME/Pictures/desktop background"
 
 # Install optional extras in non-interactive mode
-./install.sh --all --non-interactive --with-gnome-settings --with-flameshot
+./install.sh --all --non-interactive --with-gnome-settings --with-spectacle
 ```
 
 ### Dependencies
@@ -117,8 +118,16 @@ sudo apt install network-manager-gnome
 # GNOME Settings (optional, for $mod+Shift+s)
 sudo apt install gnome-control-center
 
-# Screenshot (Flatpak)
-flatpak install flathub org.flameshot.Flameshot
+# Screenshot
+# Both extras are required and neither is a dependency of kde-spectacle:
+#   qml-module-qtquick-shapes  without it the region selector never appears
+#                              (Spectacle just exits silently)
+#   breeze-icon-theme          without it the annotation toolbar has no icons
+#                              (KIconThemes defaults to "breeze")
+sudo apt install kde-spectacle qml-module-qtquick-shapes breeze-icon-theme
+
+# Screen recording (Spectacle cannot record; screen-record.sh uses x11grab)
+sudo apt install ffmpeg
 
 # Browsers
 # Install Brave and/or Google Chrome manually
@@ -156,6 +165,7 @@ ln -sn "$PWD/rofi/rofi_launcher.sh" ~/.local/bin/rofi_launcher.sh
 ln -sn "$PWD/rofi/rofi_sudo_launcher.sh" ~/.local/bin/rofi_sudo_launcher.sh
 ln -sn "$PWD/rofi/rofi-askpass" ~/.local/bin/rofi-askpass
 ln -sn "$PWD/rofi/rofi_powermenu.sh" ~/.local/bin/rofi_powermenu.sh
+ln -sn "$PWD/rofi/rofi_confirm.sh" ~/.local/bin/rofi_confirm.sh
 ln -sn "$PWD/rofi/rofi_calc.sh" ~/.local/bin/rofi_calc.sh
 ln -sn "$PWD/rofi/rofi_clipboard.sh" ~/.local/bin/rofi_clipboard.sh
 ln -sn "$PWD/rofi/rofi_wifi.sh" ~/.local/bin/rofi_wifi.sh
@@ -179,7 +189,10 @@ The repository now includes my WezTerm config in `wezterm/.wezterm.lua`.
 Highlights:
 
 - no title bar or tab bar
-- thin split line and zero padding
+- thin split line and a small padding, so picom's 12px corner radius does not
+  clip the glyphs in the corner rows
+- JetBrainsMono Nerd Font, the same patched build the bar and Rofi use, so
+  prompt/starship icons render inside the terminal too
 - palette loaded from the active desktop theme and reloaded automatically
 - pane navigation with `Alt + Arrow keys`
 - pane splitting with `Alt+e` and `Alt+o`
@@ -270,9 +283,27 @@ New windows pick their split direction automatically ([autotiling](https://githu
 | ------------ | --------------------- |
 | `$mod + b`   | Open Brave Browser    |
 | `$mod + c`   | Open Google Chrome    |
-| `Print`      | Screenshot: region selector (Flameshot) |
+| `Print`      | Screenshot: region selector (Spectacle) |
 | `Shift + Print` | Whole desktop to the clipboard |
-| `Ctrl + Print`  | Focused monitor to the clipboard |
+| `Ctrl + Print`  | Monitor under the cursor to the clipboard |
+| `Alt + Print`   | Focused window to the clipboard |
+| `$mod + Print`  | Start/stop recording the focused monitor (~/Videos) |
+| `$mod + Shift + Print` | Start/stop recording the whole desktop |
+
+Recording is ffmpeg/x11grab driven by `screen-record.sh`; the same key starts and
+stops it. Add `--audio` to the binding to capture desktop sound too.
+
+> **If a `Print` shortcut opens Spectacle instead of running its binding**, KDE's
+> `kglobalaccel5` is stealing the key. Spectacle registers Plasma's default global
+> shortcuts (`Print`, `Shift+Print`, `Meta+Print`, `Meta+Shift+Print`,
+> `Meta+Ctrl+Print`) and the daemon grabs them at the X level, so i3 never sees the
+> press. Taking a screenshot re-activates the daemon over D-Bus, so killing it is
+> not enough. Disable the shortcuts in `~/.config/kglobalshortcutsrc` by setting the
+> first field of every key under `[org.kde.spectacle.desktop]` to `none`
+> (`Foo=none,Meta+Print,...` keeps the default recorded as user-disabled), then
+> reload i3 so it can grab the freed keys. Worth checking the other sections of that
+> file too: Dolphin's `Meta+E` and the emoji picker's `Meta+.` collide with
+> `$mod+e` and `$mod+period` here.
 
 ### Media and Hardware
 
@@ -318,7 +349,9 @@ Workspaces are pinned to monitors: odd workspaces on DP-0, even ones on DP-4 (ea
 
 ## Status Bar (i3status-rs)
 
-Position: **top** | Theme: **Dracula** | Icons: **material-nf** (Nerd Font glyphs, provided by JetBrainsMono Nerd Font)
+Position: **top** | Theme: follows the active rice | Icons: **material-nf** (Nerd Font glyphs, provided by JetBrainsMono Nerd Font)
+
+Every theme overrides `idle_bg` to `#00000000`. The bundled i3status-rs themes ship an opaque idle background, which painted over the translucent `$barBackground` and left only the workspace half of the bar frosted. Blocks in a warning or critical state keep their coloured pill.
 
 ### Configured Blocks
 
@@ -353,19 +386,48 @@ Note: I am using Picom v13 compiled locally — this version includes animation 
 | Shadows             | Enabled (radius: 12px, opacity: 0.45), cropped per monitor |
 | Fading              | Enabled (delta: 4ms)                                   |
 | Inactive windows    | Dimmed 6% (a 1% opacity change was invisible and forced a full blend) |
-| Frame Opacity       | 98%                                                    |
-| Rounded Corners     | 12px                                                   |
+| Frame Opacity       | 100% (98% only blended the 2px border for no visible gain) |
+| Rounded Corners     | 12px (needs an i3 border of 4px — see below)            |
 | Background Blur     | `dual_kawase` strength 5, enabled per window           |
 | Dithering           | Enabled (removes NVIDIA banding on blur/shadow gradients) |
 | VSync               | Enabled                                                |
 | Fullscreen          | Unredirected after 3s so games bypass the compositor   |
 | Corners             | Squared when a window fills the work area (see below)  |
+| App-drawn menus     | Never blurred or rounded (see below)                   |
 
 Blur is off by default and switched on only for the surfaces that are translucent: the i3bar, Rofi, Dunst, Eww and WezTerm. Opaque windows have nothing to blur, so they cost nothing. The translucency itself comes from the theme (`$barBackground` in `themes/<name>/i3.conf`, the `bg` alpha in `rofi.rasi`, `transparency` in `dunstrc.base`) — make those opaque again and the blur simply disappears.
 
 A window that is alone on its workspace gets no gaps (`smart_gaps`) and no border (`smart_borders`), so it sits flush against the screen edges — rounding it there bites a corner out of the picture. Picom squares those corners by matching the geometry of the full work area (`width = 1920` and either `1055px` below the bar or `1080px` with the bar hidden). Only a solo window can be that size: as soon as it shares the workspace the gaps shrink it to 1910px or less, so tiled splits and floating windows keep their 12px radius. Adjust those numbers in `picom/picom.conf` if you change resolution or bar height.
 
 If fullscreen alt-tabbing ever flickers, set `unredir-if-possible = false` back in `picom/picom.conf`.
+
+### Corner radius and border width are coupled
+
+Picom masks the whole composited window — i3's border included — with a rounded
+rectangle. Along the corner arc that mask eats every ring thinner than
+`radius * (1 - 1/sqrt(2))`, so a border below that threshold simply disappears
+across each corner and leaves a dark notch. With `corner-radius = 12` the
+threshold is 3.5px, which is why `default_border` is `pixel 4`. Measured on the
+dropdown terminal:
+
+| Radius | Border | Corner arc          |
+| ------ | ------ | ------------------- |
+| 12     | 2px    | broken over 5 rows  |
+| 12     | 3px    | broken over 2 rows  |
+| 12     | 4px    | continuous          |
+| 8      | 2px    | broken over 2 rows  |
+| 8      | 3px    | continuous          |
+
+Change one and the other has to follow. `default_border` only applies to windows
+created afterwards, so existing ones keep their old width until the next login.
+
+Chromium-family menus (Brave, Chrome, Electron) and GTK menus with client-side
+decorations draw their own rounded corners and drop shadow *inside* the window,
+so the X window is larger than the menu you see and the surrounding margin is
+transparent. Blurring or rounding that window frosts the margin too, which shows
+up as a translucent blurred border floating around every menu. Those windows are
+therefore excluded from blur, rounding and the popup opacity — the app already
+drew the decoration.
 
 > All per-window behavior (shadow/corner exclusions, window-type opacity) lives in the unified `rules` block — since picom v12, legacy options like `wintypes` and `shadow-exclude` are ignored when `rules` is set.
 
@@ -395,11 +457,11 @@ The selected theme is recorded in `~/.config/rice-theme/current` and applied con
 
 | File            | Consumed by                                                     |
 | --------------- | --------------------------------------------------------------- |
-| `colors.sh`     | the lock screen and any script that needs the raw palette        |
+| `colors.sh`     | the lock screen, the GTK/icon/cursor themes, and any script that needs the raw palette |
 | `i3.conf`       | spliced into `i3wm/config` between the `# >>> theme colors` markers |
 | `i3status.toml` | spliced into the i3status-rs config (bundled theme name, or a full `[theme.overrides]` palette for themes i3status-rs does not ship, like Tokyo Night) |
 | `rofi.rasi`     | symlinked to `~/.config/rofi/current-theme.rasi`                 |
-| `dunst.conf`    | concatenated into `~/.config/dunst/dunstrc`                      |
+| `dunst.conf`    | concatenated into `~/.config/dunst/dunstrc` (colors + the icon theme) |
 | `eww.scss`      | copied to `eww/_colors.scss`                                     |
 | `wezterm.lua`   | symlinked and hot-reloaded by WezTerm                            |
 
@@ -415,6 +477,8 @@ Configured features:
 
 - colors inherited from the active desktop theme
 - pre-rendered blurred background cache for instant locking, with live blur as fallback
+- the cache is built at the size of the whole X screen and each monitor's region is
+  filled separately, so a 1920x1080 wallpaper is not stretched across a dual-head setup
 - Clock with date and time
 - Circular indicator (radius: 120px)
 - JetBrainsMono Nerd Font

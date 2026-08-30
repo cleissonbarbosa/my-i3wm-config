@@ -7,7 +7,10 @@
 }
 
 .dashboard {
-  background-color: $bg;
+  // rgba, not the flat $bg: the panel is in picom's blur list (the eww rule in
+  // picom.conf) and an opaque background gave the compositor nothing to frost,
+  // so that rule was doing nothing at all.
+  background-color: rgba($bg, 0.88);
   color: $fg;
   // $muted, not $accent: the accent is a saturated highlight colour and a
   // 2px frame of it around the whole panel drowns out the widgets it borders.

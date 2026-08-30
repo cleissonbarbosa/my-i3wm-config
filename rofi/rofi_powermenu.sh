@@ -4,15 +4,11 @@
 THEME="$HOME/.config/rofi/current-theme.rasi"
 SIZE='window { width: 16%; } listview { lines: 5; }'
 
-confirm() {
-  local answer
-  answer=$(printf 'Não\nSim' | rofi -dmenu -i -p "$1?" -theme "$THEME" \
-    -theme-str 'window { width: 16%; } listview { lines: 2; }')
-  [[ "$answer" == "Sim" ]]
-}
+# Shared with the $mod+Shift+e binding in the i3 config.
+confirm() { "$HOME/.local/bin/rofi_confirm.sh" "$1"; }
 
 chosen=$(printf '󰌾 Bloquear\n󰤄 Suspender\n󰍃 Sair do i3\n󰜉 Reiniciar\n󰐥 Desligar' \
-  | rofi -dmenu -i -p "⏻ " -theme "$THEME" -theme-str "$SIZE") || exit 0
+  | rofi -dmenu -i -p "󰐥 " -theme "$THEME" -theme-str "$SIZE") || exit 0
 
 case "$chosen" in
   *Bloquear)  loginctl lock-session ;;

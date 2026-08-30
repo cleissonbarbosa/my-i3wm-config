@@ -21,7 +21,7 @@ APPLY_WEZTERM=true
 INSTALL_ROFI=true
 COPY_WALLPAPERS=true
 WITH_GNOME_SETTINGS=false
-WITH_FLAMESHOT=false
+WITH_SPECTACLE=false
 BUILD_PICOM=false
 # Symlink configs into place so the repository stays the single source of
 # truth. Use --copy for standalone copies (the old behavior).
@@ -73,7 +73,7 @@ Options:
   --no-rofi                Do not install rofi scripts
   --no-wallpapers          Do not copy wallpapers from the repo
   --with-gnome-settings    Install gnome-control-center
-  --with-flameshot         Install Flameshot via flatpak
+  --with-spectacle         Install Spectacle plus its QML and icon deps via apt
   --config-dir DIR         Set the base config directory (default: ~/.config)
   --wallpaper-dir DIR      Set the wallpaper destination directory
   -h, --help               Show this help message
@@ -376,8 +376,8 @@ while [[ $# -gt 0 ]]; do
       WITH_GNOME_SETTINGS=true
       shift
       ;;
-    --with-flameshot)
-      WITH_FLAMESHOT=true
+    --with-spectacle)
+      WITH_SPECTACLE=true
       shift
       ;;
     --picom-src)
@@ -432,8 +432,9 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
       BUILD_PICOM=true
     fi
 
-    if prompt_yes_no "Install dunst, jq, xclip and ImageMagick" "y"; then
-      install_apt_packages dunst jq xclip imagemagick
+    # ffmpeg backs the screen-record.sh bindings (x11grab).
+    if prompt_yes_no "Install dunst, jq, xclip, ImageMagick and ffmpeg" "y"; then
+      install_apt_packages dunst jq xclip imagemagick ffmpeg
     fi
 
     if prompt_yes_no "Install rofi" "y"; then
@@ -469,18 +470,19 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
       install_pip_tools
     fi
 
-    if prompt_yes_no "Install Flameshot via flatpak" "n"; then
-      if command -v flatpak >/dev/null 2>&1; then
-        flatpak install -y flathub org.flameshot.Flameshot
-      else
-        log "flatpak not found. Skipping Flameshot."
-      fi
+    # Neither of the extra packages is pulled in by kde-spectacle, and both are
+    # needed outside a KDE session: without qml-module-qtquick-shapes the region
+    # selector fails to load its QML overlay and Spectacle exits without
+    # capturing anything, and without breeze-icon-theme the annotation toolbar
+    # renders blank (KIconThemes defaults to "breeze" and finds nothing).
+    if prompt_yes_no "Install Spectacle (screenshots)" "y"; then
+      install_apt_packages kde-spectacle qml-module-qtquick-shapes breeze-icon-theme
     fi
   else
     install_apt_packages \
       git python3-i3ipc i3 xss-lock dex numlockx feh \
       picom \
-      dunst jq xclip imagemagick \
+      dunst jq xclip imagemagick ffmpeg \
       rofi \
       wireplumber playerctl \
       light \
@@ -495,12 +497,8 @@ if [[ "$INSTALL_DEPS" == "true" ]]; then
       install_apt_packages gnome-control-center
     fi
 
-    if [[ "$WITH_FLAMESHOT" == "true" ]]; then
-      if command -v flatpak >/dev/null 2>&1; then
-        flatpak install -y flathub org.flameshot.Flameshot
-      else
-        log "flatpak not found. Skipping Flameshot."
-      fi
+    if [[ "$WITH_SPECTACLE" == "true" ]]; then
+      install_apt_packages kde-spectacle qml-module-qtquick-shapes breeze-icon-theme
     fi
   fi
 
@@ -616,6 +614,7 @@ if [[ "$INSTALL_ROFI" == "true" ]]; then
   install_file "$SCRIPT_DIR/rofi/rofi_sudo_launcher.sh" "$LOCAL_BIN_DIR/rofi_sudo_launcher.sh"
   install_file "$SCRIPT_DIR/rofi/rofi-askpass" "$LOCAL_BIN_DIR/rofi-askpass"
   install_file "$SCRIPT_DIR/rofi/rofi_powermenu.sh" "$LOCAL_BIN_DIR/rofi_powermenu.sh"
+  install_file "$SCRIPT_DIR/rofi/rofi_confirm.sh" "$LOCAL_BIN_DIR/rofi_confirm.sh"
   install_file "$SCRIPT_DIR/rofi/rofi_calc.sh" "$LOCAL_BIN_DIR/rofi_calc.sh"
   install_file "$SCRIPT_DIR/rofi/rofi_clipboard.sh" "$LOCAL_BIN_DIR/rofi_clipboard.sh"
   install_file "$SCRIPT_DIR/rofi/rofi_wifi.sh" "$LOCAL_BIN_DIR/rofi_wifi.sh"
@@ -624,6 +623,7 @@ if [[ "$INSTALL_ROFI" == "true" ]]; then
 
   chmod +x "$LOCAL_BIN_DIR/rofi_launcher.sh" "$LOCAL_BIN_DIR/rofi_sudo_launcher.sh" \
            "$LOCAL_BIN_DIR/rofi-askpass" "$LOCAL_BIN_DIR/rofi_powermenu.sh" \
+           "$LOCAL_BIN_DIR/rofi_confirm.sh" \
            "$LOCAL_BIN_DIR/rofi_calc.sh" "$LOCAL_BIN_DIR/rofi_clipboard.sh" \
            "$LOCAL_BIN_DIR/rofi_wifi.sh" "$LOCAL_BIN_DIR/rofi_keybinds.sh" \
            "$LOCAL_BIN_DIR/theme-switcher.sh"

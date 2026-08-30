@@ -1,19 +1,14 @@
 # >>> i3status theme (managed by themes/theme-switcher.sh — do not edit) >>>
-# Tokyo Night is not bundled with i3status-rs, so the palette is spelled out here.
 [theme]
-theme = "plain"
+theme = "ctp-mocha"
 [theme.overrides]
-idle_bg = "#1a1b26"
-idle_fg = "#c0caf5"
-info_bg = "#7aa2f7"
-info_fg = "#1a1b26"
-good_bg = "#9ece6a"
-good_fg = "#1a1b26"
-warning_bg = "#e0af68"
-warning_fg = "#1a1b26"
-critical_bg = "#f7768e"
-critical_fg = "#c0caf5"
-separator = "\ue0b2"
+# Transparent idle background so the frosted bar shows through: $barBackground
+# (themes/<name>/i3.conf) carries an alpha channel and picom blurs the dock,
+# but an opaque idle_bg would paint over it and leave only the workspace side
+# frosted. Colored states (info/good/warning/critical) keep their pill.
+idle_bg = "#00000000"
+alternating_tint_bg = "#00000000"
+alternating_tint_fg = "#00000000"
 separator_bg = "auto"
 separator_fg = "auto"
 # <<< i3status theme <<<
@@ -39,9 +34,20 @@ cmd = "wezterm start -- sh -c 'sudo apt update && sudo apt upgrade; read -r -p \
 
 [[block]]
 block = "disk_space"
+path = "/home"
+info_type = "available"
+format = " $icon Home: $available "
+interval = 20
+[[block.click]]
+button = "left"
+cmd = "xdg-open $HOME"
+
+
+[[block]]
+block = "disk_space"
 path = "/"
 info_type = "available"
-format = "$icon Disk: $available"
+format = " $icon Root: $available "
 interval = 20
 [[block.click]]
 button = "left"
@@ -60,7 +66,7 @@ cmd = "wezterm start -- btop"
 
 [[block]]
 block = "cpu"
-format = "$icon $utilization "
+format = " $icon $utilization "
 format_alt = " CPU: $utilization "
 interval = 5
 [[block.click]]
@@ -70,7 +76,7 @@ cmd = "wezterm start -- btop"
 # GPU block requires nvidia-smi to be installed and in PATH
 [[block]]
 block = "nvidia_gpu"
-format = "$icon $utilization/$temperature "
+format = " $icon $utilization/$temperature "
 interval = 5
 [[block.click]]
 button = "left"
@@ -80,8 +86,8 @@ cmd = "wezterm start -- watch -n1 nvidia-smi"
 block = "net"
 # No "device" set: the block auto-detects the interface of the default route.
 # Pin it with e.g. device = "enp7s0" if auto-detection picks the wrong one.
-format = "$icon ED: $graph_down($speed_down) "
-format_alt = "$icon EU: $graph_up($speed_up) "
+format = " $icon ED: $graph_down($speed_down) "
+format_alt = " $icon EU: $graph_up($speed_up) "
 interval = 5
 [[block.click]]
 button = "left"
@@ -99,6 +105,7 @@ name = "metno"
 
 [[block]]
 block = "sound"
+format = " $icon {$volume|} "
 step_width = 3
 [[block.click]]
 button = "right"
@@ -109,7 +116,7 @@ cmd = "pavucontrol"
 [[block]]
 block = "notify"
 driver = "dunst"
-format = " $icon {($notification_count.eng(w:1)) |}"
+format = " $icon {($notification_count.eng(w:1)) |} "
 [[block.click]]
 button = "left"
 action = "toggle_paused"

@@ -3,23 +3,23 @@
 set $mod Mod4
 
 # >>> theme colors (managed by themes/theme-switcher.sh — do not edit) >>>
-set $backgroundColor #1a1b26
-set $selection #292e42
-set $comment #565f89
-set $foreground #c0caf5
+set $backgroundColor #1e1e2e
+set $selection #313244
+set $comment #6c7086
+set $foreground #cdd6f4
 
-set $yellow #e0af68
-set $orange #ff9e64
-set $red #f7768e
-set $magenta #bb9af7
-set $blue #7aa2f7
-set $cyan #7dcfff
-set $green #9ece6a
+set $yellow #f9e2af
+set $orange #fab387
+set $red #f38ba8
+set $magenta #cba6f7
+set $blue #89b4fa
+set $cyan #89dceb
+set $green #a6e3a1
 
 # Bar background with alpha (#rrggbbaa) so picom can frost it — see the
 # dock rule in picom.conf. Use $backgroundColor here to get an opaque bar.
-set $barBackground #1a1b26cc
-set $accent #7aa2f7
+set $barBackground #1e1e2ecc
+set $accent #cba6f7
 # <<< theme colors <<<
 
 
@@ -56,6 +56,11 @@ bindsym $mod+Escape exec --no-startup-id loginctl lock-session
 
 # NetworkManager tray applet
 exec --no-startup-id nm-applet
+
+# Agente de autenticação PolicyKit (o i3 não fornece um; sem isto o
+# GNOME Software e afins falham com "Failed to obtain authentication").
+exec_always --no-startup-id sh -c 'pgrep -f polkit-mate-authentication-agent >/dev/null || /usr/libexec/polkit-mate-authentication-agent-1 &'
+
 
 # Volume control (PipeWire/WirePlumber): 5% steps, capped at 100%,
 # with a dunst OSD progress bar.
@@ -167,16 +172,19 @@ exec --no-startup-id systemctl --user set-environment ADW_DISABLE_PORTAL=1
 # Open Gnome Settings
 bindsym $mod+Shift+s exec --no-startup-id XDG_CURRENT_DESKTOP=GNOME gnome-control-center
 
-set $ws1 "1"
-set $ws2 "2"
-set $ws3 "3"
-set $ws4 "4"
-set $ws5 "5"
-set $ws6 "6"
-set $ws7 "7"
-set $ws8 "8"
-set $ws9 "9"
-set $ws10 "10"
+# Workspace labels: "<number> <icon>". The leading digits matter — every
+# binding below uses `workspace number $wsN`, which matches on them, so the
+# icons are cosmetic and the keys keep working.
+set $ws1 "1 󰆍"
+set $ws2 "2 󰖟"
+set $ws3 "3 󰅴"
+set $ws4 "4 󰈙"
+set $ws5 "5 󰊌"
+set $ws6 "6 󰝙"
+set $ws7 "7 󰕧"
+set $ws8 "8 󰊗"
+set $ws9 "9 󰒓"
+set $ws10 "10 󰍹"
 
 # Pin workspaces to monitors: odd on the left (DP-0), even on the right (DP-4).
 # Each lists the other output as fallback for single-monitor sessions.
@@ -247,8 +255,11 @@ bindsym --release $mod+Shift+KP_Insert move container to workspace number $ws10
 bindsym $mod+Shift+c reload
 # restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
 bindsym $mod+Shift+r restart
-# exit i3 (logs you out of your X session)
-bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -B 'Yes, exit i3' 'i3-msg exit'"
+# exit i3 (logs you out of your X session). i3-nagbar draws itself with the
+# default Sans/grey X look and was the only untouched surface left in the rice,
+# so the confirmation goes through the themed rofi prompt instead — the same
+# one rofi_powermenu.sh uses.
+bindsym $mod+Shift+e exec --no-startup-id ~/.local/bin/rofi_confirm.sh "Sair do i3" && i3-msg exit
 
 # resize window (you can also use the mouse for that)
 mode "resize" {
@@ -288,8 +299,13 @@ bindsym $mod+Shift+g mode "$mode_gaps"
 # No title bars, but keep a thin border: with `pixel 0` the only focus cue is
 # the flashfocus flash, which is easy to miss on a dual-monitor setup.
 # smart_borders hides it again whenever a workspace holds a single window.
-default_border pixel 2
-default_floating_border pixel 2
+# 4px, not 2px: picom masks the composited window (border included) with a
+# 12px rounded rect, and along the corner arc that mask eats everything thinner
+# than radius * (1 - 1/sqrt(2)) — 3.5px here. With a 2px border the accent line
+# simply vanished across each corner and left a dark notch. Measured: 2px
+# breaks over 5 rows, 3px over 2, 4px is continuous.
+default_border pixel 4
+default_floating_border pixel 4
 smart_borders on
 
 
@@ -321,7 +337,7 @@ for_window [class="Nm-connection-editor"] floating enable
 for_window [class="(?i)gnome-control-center"] floating enable, resize set 1100 720
 for_window [class="(?i)gnome-calculator"] floating enable
 for_window [class="(?i)nm-openvpn-auth-dialog"] floating enable
-for_window [class="(?i)flameshot"] floating enable, border pixel 0
+for_window [class="(?i)spectacle"] floating enable, border pixel 0
 for_window [class="(?i)zoom"] floating enable
 for_window [class="Steam" title="^Steam - News"] floating enable
 for_window [title="(?i)^(open|save) (file|folder|as)"] floating enable, resize set 1000 640
@@ -369,7 +385,7 @@ bar {
 
           focused_workspace  $accent $accent $backgroundColor
           active_workspace   $backgroundColor $selection $foreground
-          inactive_workspace $barBackground $barBackground #BFBFBF
+          inactive_workspace $barBackground $barBackground $comment
           urgent_workspace   $red $red $foreground
           binding_mode       $red $red $foreground
         }
@@ -389,9 +405,13 @@ exec_always --no-startup-id xrandr --output DP-0 --mode 1920x1080 --rate 144.00 
 exec_always --no-startup-id ~/.config/i3/scripts/autotiling.sh
 
 # class                 border  bground text    indicator child_border
-client.focused          $comment $comment $foreground $comment   $comment
+# The focused border carries $accent, the same colour as focused_workspace in
+# the bar: with $comment it was a grey barely distinguishable from
+# focused_inactive's $selection, which on two monitors made "which window has
+# the focus" a guess. The indicator (split direction) shares the accent.
+client.focused          $accent $accent $backgroundColor $accent   $accent
 client.focused_inactive $selection $selection $foreground $selection   $selection
-client.unfocused        $backgroundColor $backgroundColor #BFBFBF $backgroundColor   $backgroundColor
+client.unfocused        $backgroundColor $backgroundColor $comment $backgroundColor   $backgroundColor
 client.urgent           $selection $red $foreground $red   $red
 client.placeholder      $backgroundColor $backgroundColor $foreground $backgroundColor   $backgroundColor
 
@@ -421,8 +441,10 @@ bindsym $mod+Shift+i exec --no-startup-id ~/.local/bin/rofi_wifi.sh
 # Searchable cheat sheet of every binding in this config
 bindsym $mod+F1 exec --no-startup-id ~/.local/bin/rofi_keybinds.sh
 
-# Skip to the next wallpaper without waiting for the slideshow interval
-bindsym $mod+F5 exec --no-startup-id pkill -USR1 -f wallpaper-slideshow.sh
+# Skip to the next wallpaper without waiting for the slideshow interval.
+# The [w] keeps the regex from matching the shell i3 spawns to run pkill --
+# that wrapper's own cmdline contains the pattern and SIGUSR1 would kill it.
+bindsym $mod+F5 exec --no-startup-id pkill -USR1 -f '[w]allpaper-slideshow.sh'
 
 # Pause/resume notifications (dunst do-not-disturb)
 bindsym $mod+Shift+comma exec --no-startup-id ~/.local/bin/dunst-dnd.sh
@@ -435,7 +457,9 @@ bindsym $mod+F9 exec --no-startup-id sh -c 'command -v i3-resurrect >/dev/null &
 bindsym $mod+F10 exec --no-startup-id sh -c 'command -v i3-resurrect >/dev/null && i3-resurrect restore'
 
 # background images slideshow (guarded against duplicate instances)
-exec --no-startup-id ~/.config/i3/scripts/wallpaper-slideshow.sh
+# exec_always so a config restart brings it back; the pidfile guard in the
+# script keeps a second copy from starting when the first is still alive.
+exec_always --no-startup-id ~/.config/i3/scripts/wallpaper-slideshow.sh
 
 exec --no-startup-id numlockx on
 
@@ -452,19 +476,39 @@ exec --no-startup-id sh -c 'command -v eww >/dev/null && eww daemon'
 # (the pause lets the old instance release the compositor selection / GLX context)
 exec_always --no-startup-id sh -c 'pkill -x picom; sleep 0.5; picom -b --config ~/.config/picom/picom.conf'
 
-# Start the Flameshot daemon (important for Flatpak)
-exec --no-startup-id flatpak run org.flameshot.Flameshot
+# Screenshots via Spectacle. No daemon to start: every binding launches it on
+# demand. The clipboard modes go through screenshot.sh because Spectacle's own
+# --copy-image loses the image as soon as it exits (see the script's comment).
+# The region selector needs the qml-module-qtquick-shapes package: without it
+# Spectacle silently exits instead of drawing the overlay.
 
-# Screenshots via Flatpak
-#   Print        interactive region selector
-#   Shift+Print  whole desktop straight to the clipboard
-#   Ctrl+Print   focused monitor straight to the clipboard
-bindsym Print exec --no-startup-id flatpak run org.flameshot.Flameshot gui
-bindsym Shift+Print exec --no-startup-id flatpak run org.flameshot.Flameshot full -c
-bindsym Ctrl+Print exec --no-startup-id flatpak run org.flameshot.Flameshot screen -c
+# Screenshot: region selector, then the editor
+bindsym Print exec --no-startup-id spectacle --region
+
+# Screenshot: whole desktop to the clipboard
+bindsym Shift+Print exec --no-startup-id ~/.config/i3/scripts/screenshot.sh full
+
+# Screenshot: monitor under the cursor to the clipboard
+bindsym Ctrl+Print exec --no-startup-id ~/.config/i3/scripts/screenshot.sh monitor
+
+# Screenshot: focused window to the clipboard
+bindsym Mod1+Print exec --no-startup-id ~/.config/i3/scripts/screenshot.sh window
+
+# Screen recording. Spectacle does not record at all, so this is ffmpeg/x11grab
+# driven by screen-record.sh; the same key starts and stops, saving to ~/Videos.
+# Append --audio to the command below to capture desktop sound as well.
+
+# Record: monitor holding the focused workspace
+bindsym $mod+Print exec --no-startup-id ~/.config/i3/scripts/screen-record.sh monitor
+
+# Record: whole desktop across every monitor
+bindsym $mod+Shift+Print exec --no-startup-id ~/.config/i3/scripts/screen-record.sh full
 
 bindsym $mod+b exec --no-startup-id brave-browser
 bindsym $mod+c exec --no-startup-id google-chrome
+
+# open nautilus
+bindsym $mod+n exec --no-startup-id nautilus $HOME
 
 for_window [class="rustdesk"] floating enable
 for_window [class="Slack"] focus

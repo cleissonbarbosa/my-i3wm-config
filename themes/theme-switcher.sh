@@ -105,16 +105,84 @@ splice_managed_block "$I3STATUS_CONFIG" "$THEME_DIR/i3status.toml" "i3status the
 rm -f "$HOME/.config/dunst/dunstrc"
 cat "$DUNST_BASE" "$THEME_DIR/dunst.conf" "$DUNST_RULES" > "$HOME/.config/dunst/dunstrc"
 
-# GTK: only switch when the theme ships a GTK theme that is installed
-if [[ -n "${GTK_THEME:-}" ]] && { [[ -d "$HOME/.themes/$GTK_THEME" ]] || [[ -d "/usr/share/themes/$GTK_THEME" ]]; }; then
-  gsettings set org.gnome.desktop.interface gtk-theme "$GTK_THEME" 2>/dev/null || true
-  if [[ -f "$HOME/.config/gtk-3.0/settings.ini" ]]; then
-    sed -i "s/^gtk-theme-name=.*/gtk-theme-name=$GTK_THEME/" "$HOME/.config/gtk-3.0/settings.ini"
+# --- GTK / icons / cursor ---------------------------------------------------
+# GTK apps (Nautilus, gnome-control-center, every file dialog) used to sit
+# outside the rice entirely: only the Dracula theme named a GTK theme, and
+# nothing ever touched the icon theme, the cursor or the dark-mode preference.
+# Each piece below is guarded on being installed, so a rice that names a theme
+# this machine does not have leaves that piece alone instead of pointing GTK at
+# something that does not exist.
+
+installed_in() {  # installed_in <subdir> <name>
+  [[ -d "$HOME/.$1/$2" || -d "/usr/share/$1/$2" ]]
+}
+
+set_gtk_key() {  # set_gtk_key <settings.ini> <key> <value>
+  local file=$1 key=$2 value=$3
+  mkdir -p "$(dirname "$file")"
+  [[ -f "$file" ]] || printf '[Settings]\n' > "$file"
+  if grep -q "^${key}=" "$file"; then
+    sed -i "s|^${key}=.*|${key}=${value}|" "$file"
+  else
+    printf '%s=%s\n' "$key" "$value" >> "$file"
   fi
+}
+
+apply_gtk() {  # apply_gtk <settings.ini key> <value> <gsettings key>
+  local key=$1 value=$2 gsetting=$3
+  gsettings set org.gnome.desktop.interface "$gsetting" "$value" 2>/dev/null || true
+  set_gtk_key "$HOME/.config/gtk-3.0/settings.ini" "$key" "$value"
+  set_gtk_key "$HOME/.config/gtk-4.0/settings.ini" "$key" "$value"
+}
+
+if [[ -n "${GTK_THEME:-}" ]] && installed_in themes "$GTK_THEME"; then
+  apply_gtk gtk-theme-name "$GTK_THEME" gtk-theme
+
+  # GTK4 has no theme-name mechanism of its own: apps read
+  # ~/.config/gtk-4.0/gtk.css directly. Left unmanaged, that file keeps
+  # pointing at whichever rice was applied first and silently overrides every
+  # theme switched to afterwards.
+  gtk4_src=""
+  for base in "$HOME/.themes" "/usr/share/themes"; do
+    if [[ -d "$base/$GTK_THEME/gtk-4.0" ]]; then
+      gtk4_src="$base/$GTK_THEME/gtk-4.0"
+      break
+    fi
+  done
+
+  mkdir -p "$HOME/.config/gtk-4.0"
+  for asset in gtk.css gtk-dark.css assets; do
+    target="$HOME/.config/gtk-4.0/$asset"
+    if [[ -n "$gtk4_src" && -e "$gtk4_src/$asset" ]]; then
+      ln -sfn "$gtk4_src/$asset" "$target"
+    elif [[ -L "$target" ]]; then
+      # Only ever removes a symlink, which is all this script creates — a real
+      # file written by hand is left alone.
+      rm -f "$target"
+    fi
+  done
 fi
 
-# Lock screen: re-render the blurred background cache with the theme wallpaper
-"$REPO_DIR/i3wm/scripts/update-lock-bg.sh" "${LOCK_WALLPAPER:-}" 2>/dev/null || true
+if [[ -n "${ICON_THEME:-}" ]] && installed_in icons "$ICON_THEME"; then
+  apply_gtk gtk-icon-theme-name "$ICON_THEME" icon-theme
+fi
+
+if [[ -n "${CURSOR_THEME:-}" ]] && installed_in icons "$CURSOR_THEME"; then
+  apply_gtk gtk-cursor-theme-name "$CURSOR_THEME" cursor-theme
+fi
+
+# Every bundled rice is dark. Without this, libadwaita and GTK4 apps ignore the
+# dark GTK theme and open as a white window in the middle of a dark desktop.
+gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true
+set_gtk_key "$HOME/.config/gtk-3.0/settings.ini" gtk-application-prefer-dark-theme 1
+set_gtk_key "$HOME/.config/gtk-4.0/settings.ini" gtk-application-prefer-dark-theme 1
+
+# Lock screen: re-render the blurred background cache with the theme wallpaper.
+# Passed as an array so an unset LOCK_WALLPAPER sends no argument at all rather
+# than an empty one, which the script would have to sift out.
+lock_bg_args=()
+[[ -n "${LOCK_WALLPAPER:-}" ]] && lock_bg_args=("$LOCK_WALLPAPER")
+"$REPO_DIR/i3wm/scripts/update-lock-bg.sh" "${lock_bg_args[@]}" 2>/dev/null || true
 
 echo "$THEME" > "$STATE_DIR/current"
 

@@ -3,7 +3,8 @@
 # Override via environment: WALLPAPER_DIR, WALLPAPER_INTERVAL (seconds).
 #
 # Send SIGUSR1 to skip to the next wallpaper immediately ($mod+F5):
-#   pkill -USR1 -f wallpaper-slideshow.sh
+#   pkill -USR1 -f '[w]allpaper-slideshow.sh'
+# The bracket stops the pattern from matching the shell that runs pkill.
 
 WALLPAPER_DIR="${WALLPAPER_DIR:-$HOME/Pictures/desktop background}"
 WALLPAPER_INTERVAL="${WALLPAPER_INTERVAL:-30}"

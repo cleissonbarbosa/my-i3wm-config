@@ -14,11 +14,14 @@ config.inactive_pane_hsb = {
   saturation = 1.0,
   brightness = 1.0, -- Keeps the inactive pane at the same brightness as the active one
 }
+-- Not zero: picom rounds this window with a 12px radius (corner-radius in
+-- picom.conf), and with no padding that radius bites into the first and last
+-- glyph of the corner rows.
 config.window_padding = {
-  left = 0,
-  right = 0,
-  top = 0,
-  bottom = 0,
+  left = 10,
+  right = 10,
+  top = 8,
+  bottom = 8,
 }
 
 -- The color scheme comes from the active rice theme (themes/theme-switcher.sh);
@@ -42,15 +45,24 @@ else
     }
 end
 
+-- "JetBrainsMono Nerd Font" first, not plain "JetBrains Mono": the patched
+-- build is what carries the glyphs the rest of this setup uses (bar, rofi,
+-- dunst), and without it every prompt/starship/eza icon inside the terminal
+-- falls back to another font or renders as tofu.
 config.font = wezterm.font_with_fallback({
+    "JetBrainsMono Nerd Font",
     "JetBrains Mono",
+    "Symbols Nerd Font",
     "DejaVu Sans Mono",
     "monospace",
 })
 config.font_size = 10.0
 
 config.window_background_opacity = 0.9
-config.text_background_opacity = 0.3 -- Keeps the text readable over the image
+-- 1.0, not 0.3: there is no background image here, so the only thing a lower
+-- value did was wash out everything that paints a cell background —
+-- selections, `ls`/eza colours, search highlights, the tmux status line.
+config.text_background_opacity = 1.0
 
 config.enable_scroll_bar = false
 
